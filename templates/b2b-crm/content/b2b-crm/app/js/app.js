@@ -411,7 +411,7 @@ function renderList() {
   const waiting = narrowed() && !filteredMatches();
   byId("recordTable").dataset.base = activeBaseKey();
   byId("loadMore").hidden = narrowed()
-    ? activeBaseKey() !== "contacts" || !filteredMatches() || !state.filtered.nextCursor
+    ? !DIRECTORY_TABS.includes(activeBaseKey()) || !filteredMatches() || !state.filtered.nextCursor
     : !pageInfo().nextCursor;
   if (!byId("loadMore").disabled) setText("loadMore", messages.loadMore);
   byId("recordHead").innerHTML = `<tr>${columns
