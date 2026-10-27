@@ -36,7 +36,10 @@ async function providerFixture({ viewSort = "asc", viewFilters = [] } = {}) {
         const offset = Number(cursor || 0);
         return { records: rows.slice(offset, offset + limit), nextCursor: offset + limit < rows.length ? String(offset + limit) : null };
       },
-      search: async ({ valueText, limit }) => contacts.filter((row) => row.fields["full-name"].toLowerCase().includes(valueText.toLowerCase())).slice(0, limit),
+      search: async ({ valueText, limit }) => {
+        reads.push({ method: "search" });
+        return contacts.filter((row) => row.fields["full-name"] === valueText).slice(0, limit);
+      },
       count: async () => ({ total: 0 }),
       listPage: async (input) => {
         reads.push({ method: "listPage", ...input });
@@ -124,5 +127,16 @@ for (const options of [{ viewSort: "desc" }, { viewFilters: [{ fieldSlug: "conta
     const { provider, reads } = await providerFixture(options);
     await assert.rejects(provider.getState(), /SCHEMA_INCOMPLETE/);
     assert.equal(reads.some((read) => read.method === "listPage"), false);
+  });
+}
+
+for (const query of ["Ali", "ali", "ALI", "  Ali  "]) {
+  test(`Contacts matches a name prefix ${JSON.stringify(query)} without exact-match search`, async () => {
+    const { provider, reads } = await providerFixture();
+    await provider.getState();
+    const page = await provider.queryBase("contacts", { query });
+    assert.deepEqual(ids(page.records), ["c1", "c2"]);
+    assert.equal(page.nextCursor, null);
+    assert.equal(reads.some((read) => read.method === "search"), false);
   });
 }
