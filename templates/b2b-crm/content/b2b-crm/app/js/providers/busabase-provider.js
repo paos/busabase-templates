@@ -1,5 +1,6 @@
 import { createRuntimeClient, resolveRuntimeResources } from "../busabase-client.js";
 import { appConfig } from "../config.js";
+import { createDirectoryReader } from "./directory-reader.js";
 import { createAirAppRecords, isAirAppWriteQueued } from "../../vendor/busabase-sdk.js";
 
 const allowedReads = new Set(appConfig.permissions.read_procedures);
@@ -139,6 +140,14 @@ const readChangeRequests = async (client) => {
 
 let runtimeClient;
 let runtimeBases = new Map();
+let readContacts;
+
+const contactPage = async (options) => {
+  requireRead("records.listPage");
+  requireRead("bases.listViews");
+  const page = await readContacts(options);
+  return { ...page, records: normalizeRecords(page.records, "contacts") };
+};
 
 const writeOutcome = (result) => ({ ...result, pending: isAirAppWriteQueued(result) });
 
@@ -149,10 +158,12 @@ export const busabaseProvider = {
     const bases = await resolveRuntimeResources(client);
     runtimeClient = client;
     runtimeBases = new Map(bases.map((base) => [base.key, base]));
+    const contacts = runtimeBases.get("contacts");
+    readContacts = contacts ? createDirectoryReader(client, contacts, "contact-directory") : null;
     const [pages, changeRequestPage, overviewCounts, baseTotals] = await Promise.all([
-      Promise.all(bases.map(async (base) => [base.key, await readPage(client, base, {
-        sort: defaultSortFor(base),
-      })])),
+      Promise.all(bases.map(async (base) => [base.key, base.key === "contacts"
+        ? await contactPage()
+        : await readPage(client, base, { sort: defaultSortFor(base) })])),
       readChangeRequests(client),
       readOverviewCounts(client, bases),
       readBaseTotals(client, bases),
@@ -182,6 +193,7 @@ export const busabaseProvider = {
   async queryBase(baseKey, options = {}) {
     const base = runtimeBases.get(baseKey);
     if (!runtimeClient || !base) throw new Error(`SCHEMA_INCOMPLETE: ${baseKey}`);
+    if (baseKey === "contacts") return contactPage(options);
     const page = options.query
       ? await searchPage(runtimeClient, base, options.query)
       : await readPage(runtimeClient, base, {
@@ -201,6 +213,7 @@ export const busabaseProvider = {
   async loadMore(baseKey, cursor) {
     const base = runtimeBases.get(baseKey);
     if (!runtimeClient || !base || !cursor) throw new Error(`SCHEMA_INCOMPLETE: ${baseKey}`);
+    if (baseKey === "contacts") return contactPage({ cursor });
     return readPage(runtimeClient, base, { cursor, sort: defaultSortFor(base) });
   },
   async createActivity(fields) {
