@@ -15,6 +15,7 @@ const required = [
   "app/js/messages.js",
   "app/js/overview-motion.js",
   "app/js/overview.js",
+  "app/js/followups.js",
   "app/js/pipeline.js",
   "app/js/busabase-client.js",
   "app/js/providers/busabase-provider.js",

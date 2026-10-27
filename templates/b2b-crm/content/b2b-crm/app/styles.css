@@ -216,6 +216,15 @@ body.sidebar-collapsed .sidebar-expand {
   align-items: center;
   gap: 6px;
 }
+#dueFollowups {
+  align-self: center;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+#dueFollowups:hover { text-decoration: underline; }
 .attention strong {
   align-self: center;
   color: var(--accent);
