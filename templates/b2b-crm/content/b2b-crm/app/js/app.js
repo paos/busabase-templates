@@ -425,7 +425,9 @@ function renderList() {
   const records = listRecords();
   const waiting = !state.due && narrowed() && !filteredMatches();
   byId("recordTable").dataset.base = activeBaseKey();
-  byId("loadMore").hidden = (!state.due && narrowed()) || !pageInfo().nextCursor;
+  byId("loadMore").hidden = !state.due && narrowed()
+    ? activeBaseKey() !== "contacts" || !filteredMatches() || !state.filtered.nextCursor
+    : !pageInfo().nextCursor;
   if (!byId("loadMore").disabled) setText("loadMore", messages.loadMore);
   byId("recordHead").innerHTML = `<tr>${columns
     .map((column) => `<th scope="col"${column.className ? ` class="${column.className}"` : ""}>${escapeHtml(column.label)}</th>`)
@@ -648,15 +650,20 @@ const queueQuery = () => {
 
 async function loadMore() {
   const baseKey = activeBaseKey();
-  const cursor = pageInfo(baseKey).nextCursor;
+  const filtered = narrowed() ? state.filtered : null;
+  const cursor = filtered ? filtered.nextCursor : pageInfo(baseKey).nextCursor;
+  const sequence = state.querySequence;
   if (!cursor) return;
   byId("loadMore").disabled = true;
   setText("loadMore", messages.loadingMore);
   try {
     const page = await state.provider.loadMore(baseKey, cursor);
-    const known = new Set(state.payload.records.map((record) => record.id));
-    state.payload.records.push(...page.records.filter((record) => !known.has(record.id)));
-    state.payload.pageInfo[baseKey] = { nextCursor: page.nextCursor, limit: page.limit };
+    if (filtered && (sequence !== state.querySequence || state.filtered !== filtered)) return;
+    const records = filtered ? filtered.records : state.payload.records;
+    const known = new Set(records.map((record) => record.id));
+    records.push(...page.records.filter((record) => !known.has(record.id)));
+    if (filtered) filtered.nextCursor = page.nextCursor;
+    else state.payload.pageInfo[baseKey] = { nextCursor: page.nextCursor, limit: page.limit };
     byId("loadMore").disabled = false;
     render();
   } catch {

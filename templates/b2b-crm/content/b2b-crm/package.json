@@ -12,7 +12,8 @@
     "build:vendor": "npm run build:sdk && npm run build:icons",
     "dev": "node server.js",
     "start": "node server.js",
-    "check": "node scripts/check.mjs"
+    "check": "node scripts/check.mjs",
+    "test": "node --experimental-vm-modules --test test/*.test.mjs"
   },
   "dependencies": {
     "@hono/node-server": "2.1.1",
