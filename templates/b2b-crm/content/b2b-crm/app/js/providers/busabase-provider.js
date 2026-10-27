@@ -141,12 +141,20 @@ const readChangeRequests = async (client) => {
 let runtimeClient;
 let runtimeBases = new Map();
 let readContacts;
+let readActivities;
 
 const contactPage = async (options) => {
   requireRead("records.listPage");
   requireRead("bases.listViews");
   const page = await readContacts(options);
   return { ...page, records: normalizeRecords(page.records, "contacts") };
+};
+
+const activityPage = async (options) => {
+  requireRead("records.listPage");
+  requireRead("bases.listViews");
+  const page = await readActivities(options);
+  return { ...page, records: normalizeRecords(page.records, "activities") };
 };
 
 const writeOutcome = (result) => ({ ...result, pending: isAirAppWriteQueued(result) });
@@ -160,9 +168,12 @@ export const busabaseProvider = {
     runtimeBases = new Map(bases.map((base) => [base.key, base]));
     const contacts = runtimeBases.get("contacts");
     readContacts = contacts ? createDirectoryReader(client, contacts, "contact-directory") : null;
+    const activities = runtimeBases.get("activities");
+    readActivities = activities ? createDirectoryReader(client, activities, "activity-timeline", defaultSortFor(activities)) : null;
     const [pages, changeRequestPage, overviewCounts, baseTotals] = await Promise.all([
       Promise.all(bases.map(async (base) => [base.key, base.key === "contacts"
         ? await contactPage()
+        : base.key === "activities" ? await activityPage()
         : await readPage(client, base, { sort: defaultSortFor(base) })])),
       readChangeRequests(client),
       readOverviewCounts(client, bases),
@@ -194,6 +205,7 @@ export const busabaseProvider = {
     const base = runtimeBases.get(baseKey);
     if (!runtimeClient || !base) throw new Error(`SCHEMA_INCOMPLETE: ${baseKey}`);
     if (baseKey === "contacts") return contactPage(options);
+    if (baseKey === "activities") return activityPage(options);
     const page = options.query
       ? await searchPage(runtimeClient, base, options.query)
       : await readPage(runtimeClient, base, {
@@ -214,6 +226,7 @@ export const busabaseProvider = {
     const base = runtimeBases.get(baseKey);
     if (!runtimeClient || !base || !cursor) throw new Error(`SCHEMA_INCOMPLETE: ${baseKey}`);
     if (baseKey === "contacts") return contactPage({ cursor });
+    if (baseKey === "activities") return activityPage({ cursor });
     return readPage(runtimeClient, base, { cursor, sort: defaultSortFor(base) });
   },
   async createActivity(fields) {
