@@ -590,14 +590,16 @@ h2 {
   margin-top: 4px;
 }
 .overview-section-head > span,
-.overview-section-head > button {
+.overview-section-head > button,
+.focus-group-head > button {
   border: 0;
   background: transparent;
   color: var(--muted);
   font-size: var(--text-xs);
   text-align: right;
 }
-.overview-section-head > button {
+.overview-section-head > button,
+.focus-group-head > button {
   min-height: 40px;
   padding: 0 8px;
   color: var(--accent);

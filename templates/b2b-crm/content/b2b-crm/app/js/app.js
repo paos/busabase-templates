@@ -567,7 +567,7 @@ function applyBodyState() {
   body.add("ws-has-mobile-bar");
   byId("overviewPage").hidden = !ready || state.screen !== "overview";
   byId("viewPage").hidden = !onView;
-  setText("mobileTitle", SCREEN_NAMES[state.screen]);
+  setText("mobileTitle", state.due ? "Follow-ups due" : SCREEN_NAMES[state.screen]);
 }
 
 function render() {
