@@ -140,21 +140,13 @@ const readChangeRequests = async (client) => {
 
 let runtimeClient;
 let runtimeBases = new Map();
-let readContacts;
-let readActivities;
+let directoryReaders = new Map();
 
-const contactPage = async (options) => {
+const directoryPage = async (baseKey, options) => {
   requireRead("records.listPage");
   requireRead("bases.listViews");
-  const page = await readContacts(options);
-  return { ...page, records: normalizeRecords(page.records, "contacts") };
-};
-
-const activityPage = async (options) => {
-  requireRead("records.listPage");
-  requireRead("bases.listViews");
-  const page = await readActivities(options);
-  return { ...page, records: normalizeRecords(page.records, "activities") };
+  const page = await directoryReaders.get(baseKey)(options);
+  return { ...page, records: normalizeRecords(page.records, baseKey) };
 };
 
 const writeOutcome = (result) => ({ ...result, pending: isAirAppWriteQueued(result) });
@@ -166,14 +158,14 @@ export const busabaseProvider = {
     const bases = await resolveRuntimeResources(client);
     runtimeClient = client;
     runtimeBases = new Map(bases.map((base) => [base.key, base]));
-    const contacts = runtimeBases.get("contacts");
-    readContacts = contacts ? createDirectoryReader(client, contacts, "contact-directory") : null;
-    const activities = runtimeBases.get("activities");
-    readActivities = activities ? createDirectoryReader(client, activities, "activity-timeline", defaultSortFor(activities)) : null;
+    directoryReaders = new Map([
+      ["contacts", "contact-directory"], ["companies", "account-directory"], ["activities", "activity-timeline"],
+    ].filter(([key]) => runtimeBases.has(key)).map(([key, viewKey]) =>
+      [key, createDirectoryReader(client, runtimeBases.get(key), viewKey, key === "activities" ? defaultSortFor(runtimeBases.get(key)) : undefined)],
+    ));
     const [pages, changeRequestPage, overviewCounts, baseTotals] = await Promise.all([
-      Promise.all(bases.map(async (base) => [base.key, base.key === "contacts"
-        ? await contactPage()
-        : base.key === "activities" ? await activityPage()
+      Promise.all(bases.map(async (base) => [base.key, directoryReaders.has(base.key)
+        ? await directoryPage(base.key)
         : await readPage(client, base, { sort: defaultSortFor(base) })])),
       readChangeRequests(client),
       readOverviewCounts(client, bases),
@@ -204,8 +196,7 @@ export const busabaseProvider = {
   async queryBase(baseKey, options = {}) {
     const base = runtimeBases.get(baseKey);
     if (!runtimeClient || !base) throw new Error(`SCHEMA_INCOMPLETE: ${baseKey}`);
-    if (baseKey === "contacts") return contactPage(options);
-    if (baseKey === "activities") return activityPage(options);
+    if (directoryReaders.has(baseKey)) return directoryPage(baseKey, options);
     const page = options.query
       ? await searchPage(runtimeClient, base, options.query)
       : await readPage(runtimeClient, base, {
@@ -225,8 +216,7 @@ export const busabaseProvider = {
   async loadMore(baseKey, cursor) {
     const base = runtimeBases.get(baseKey);
     if (!runtimeClient || !base || !cursor) throw new Error(`SCHEMA_INCOMPLETE: ${baseKey}`);
-    if (baseKey === "contacts") return contactPage({ cursor });
-    if (baseKey === "activities") return activityPage({ cursor });
+    if (directoryReaders.has(baseKey)) return directoryPage(baseKey, { cursor });
     return readPage(runtimeClient, base, { cursor, sort: defaultSortFor(base) });
   },
   async createActivity(fields) {

@@ -12,13 +12,17 @@ const contacts = [
   ["c4", "Charlie", "active"],
   ["c5", "Yara", "inactive"],
 ].map(([id, name, status]) => ({ id, baseId: "contacts-base", fields: { "full-name": name, "contact-status": status } }));
+const companies = [
+  ["b6", "Zeta", "partner"], ["b2", "Bravo", "customer"], ["b5", "Echo", "prospect"],
+  ["b1", "Alpha", "customer"], ["b4", "Delta", "customer"], ["b3", "Charlie", "prospect"],
+].map(([id, name, relationship]) => ({ id, baseId: "companies-base", fields: { "company-name": name, "relationship-type": relationship } }));
 const expectedIds = ["c1", "c2", "c3", "c4", "c5", "c6"];
 
 async function providerFixture({ viewSort = "asc", viewFilters = [] } = {}) {
   const bases = ["contacts", "companies", "deals"].map((key) => ({
     key, baseId: `${key}-base`, readLimit: 2,
-    fields: [{ slug: key === "contacts" ? "full-name" : "name" }],
-    views: key === "contacts" ? [{ key: "contact-directory", viewId: "" }] : [],
+    fields: [{ slug: key === "contacts" ? "full-name" : key === "companies" ? "company-name" : "name" }],
+    views: key === "contacts" ? [{ key: "contact-directory", viewId: "" }] : key === "companies" ? [{ key: "account-directory", viewId: "" }] : [],
   }));
   const config = {
     schema: { folder: { nodeId: "folder" }, bases },
@@ -32,7 +36,7 @@ async function providerFixture({ viewSort = "asc", viewFilters = [] } = {}) {
     records: {
       list: async ({ baseId, cursor, limit }) => {
         reads.push({ method: "list", baseId });
-        const rows = baseId === "contacts-base" ? contacts : [];
+        const rows = baseId === "contacts-base" ? contacts : baseId === "companies-base" ? companies : [];
         const offset = Number(cursor || 0);
         return { records: rows.slice(offset, offset + limit), nextCursor: offset + limit < rows.length ? String(offset + limit) : null };
       },
@@ -43,8 +47,8 @@ async function providerFixture({ viewSort = "asc", viewFilters = [] } = {}) {
       count: async () => ({ total: 0 }),
       listPage: async (input) => {
         reads.push({ method: "listPage", ...input });
-        assert.equal(input.viewId, "alphabetical-view");
-        let rows = expectedIds.map((id) => contacts.find((row) => row.id === id));
+        assert.equal(input.viewId, input.baseId === "contacts-base" ? "alphabetical-view" : "accounts-view");
+        let rows = input.baseId === "contacts-base" ? expectedIds.map((id) => contacts.find((row) => row.id === id)) : ["b1", "b2", "b3", "b4", "b5", "b6"].map((id) => companies.find((row) => row.id === id));
         for (const filter of input.filters || []) {
           rows = rows.filter((row) => filter.operator === "contains"
             ? String(row.fields[filter.fieldSlug]).toLowerCase().includes(filter.value.toLowerCase())
@@ -54,8 +58,9 @@ async function providerFixture({ viewSort = "asc", viewFilters = [] } = {}) {
         return { records: rows.slice((input.page - 1) * input.pageSize, input.page * input.pageSize), page: input.page, totalPages, total: rows.length, pageSize: input.pageSize };
       },
     },
-    bases: { listViews: async () => {
+    bases: { listViews: async ({ baseId }) => {
       reads.push({ method: "bases.listViews" });
+      if (baseId === "companies-base") return [{ id: "accounts-view", slug: "account-directory", config: { sorts: [{ fieldSlug: "company-name", direction: "asc" }] } }];
       return [{ id: "alphabetical-view", slug: "contact-directory", config: { filters: viewFilters, sorts: [{ fieldSlug: "full-name", direction: viewSort }] } }];
     } },
     changeRequests: { list: async () => ({ changeRequests: [], nextCursor: null }) },
@@ -102,10 +107,10 @@ test("Contacts initial load and later pages are alphabetically ordered before sl
   }
   assert.deepEqual(ids(records), expectedIds);
   assert.equal(new Set(ids(records)).size, contacts.length);
-  assert.equal(reads.filter((read) => read.method === "listPage").length, 3);
-  assert.equal(reads.filter((read) => read.method === "bases.listViews").length, 1);
+  assert.equal(reads.filter((read) => read.method === "listPage" && read.baseId === "contacts-base").length, 3);
+  assert.ok(reads.filter((read) => read.method === "bases.listViews").length >= 1);
   assert.equal(reads.filter((read) => read.method === "list" && read.baseId === "contacts-base").length, 0);
-  assert.equal(reads.filter((read) => read.method === "list" && read.baseId !== "contacts-base").length, 2);
+  assert.equal(reads.filter((read) => read.method === "list" && read.baseId === "deals-base").length, 1);
 });
 
 test("Contacts search and status filter retain alphabetical order across subsequent pages", async () => {
@@ -126,7 +131,7 @@ for (const options of [{ viewSort: "desc" }, { viewFilters: [{ fieldSlug: "conta
   test(`Contacts refuses a saved view that would change the directory's ordering or membership ${JSON.stringify(options)}`, async () => {
     const { provider, reads } = await providerFixture(options);
     await assert.rejects(provider.getState(), /SCHEMA_INCOMPLETE/);
-    assert.equal(reads.some((read) => read.method === "listPage"), false);
+    assert.equal(reads.some((read) => read.method === "listPage" && read.baseId === "contacts-base"), false);
   });
 }
 
@@ -140,3 +145,27 @@ for (const query of ["Ali", "ali", "ALI", "  Ali  "]) {
     assert.equal(reads.some((read) => read.method === "search"), false);
   });
 }
+
+test("Companies directory is globally alphabetical and relationship filters remain exact across pages", async () => {
+  const { provider, reads } = await providerFixture();
+  const state = await provider.getState();
+  const loaded = state.records.filter((row) => row.baseKey === "companies");
+  assert.deepEqual(ids(loaded), ["b1", "b2"]);
+  let cursor = state.pageInfo.companies.nextCursor;
+  while (cursor) {
+    const page = await provider.loadMore("companies", cursor);
+    loaded.push(...page.records);
+    cursor = page.nextCursor;
+  }
+  assert.deepEqual(ids(loaded), ["b1", "b2", "b3", "b4", "b5", "b6"]);
+  const first = await provider.queryBase("companies", { filter: { fieldSlug: "relationship-type", value: "customer" } });
+  assert.deepEqual(ids(first.records), ["b1", "b2"]);
+  const second = await provider.loadMore("companies", first.nextCursor);
+  assert.deepEqual(ids(second.records), ["b4"]);
+  assert.equal(second.nextCursor, null);
+  const query = await provider.queryBase("companies", { query: "a", filter: { fieldSlug: "relationship-type", value: "prospect" } });
+  assert.deepEqual(ids(query.records), ["b3"]);
+  const missing = await provider.queryBase("companies", { filter: { fieldSlug: "relationship-type", value: "missing" } });
+  assert.deepEqual(ids(missing.records), []);
+  assert.equal(reads.some((read) => read.method === "list" && read.baseId === "companies-base"), false);
+});

@@ -19,7 +19,7 @@ async function providerFixture({ viewSort = "desc", viewFilters = [] } = {}) {
   const bases = ["activities", "companies", "deals"].map((key) => ({
     key, baseId: `${key}-base`, readLimit: 2,
     fields: [{ slug: key === "activities" ? "activity-subject" : "name" }],
-    views: key === "activities" ? [{ key: "activity-timeline", viewId: "" }] : [],
+    views: key === "activities" ? [{ key: "activity-timeline", viewId: "" }] : key === "companies" ? [{ key: "account-directory", viewId: "" }] : [],
   }));
   const config = {
     schema: { folder: { nodeId: "folder" }, bases },
@@ -44,6 +44,10 @@ async function providerFixture({ viewSort = "desc", viewFilters = [] } = {}) {
       count: async () => ({ total: 0 }),
       listPage: async (input) => {
         reads.push({ method: "listPage", ...input });
+        if (input.baseId === "companies-base") {
+          assert.equal(input.viewId, "accounts-view");
+          return { records: [], page: input.page, totalPages: 0, total: 0, pageSize: input.pageSize };
+        }
         assert.equal(input.viewId, "timeline-view");
         let rows = [...activities];
         for (const filter of input.filters || []) {
@@ -56,8 +60,9 @@ async function providerFixture({ viewSort = "desc", viewFilters = [] } = {}) {
         return { records: rows.slice((input.page - 1) * input.pageSize, input.page * input.pageSize), page: input.page, totalPages, total: rows.length, pageSize: input.pageSize };
       },
     },
-    bases: { listViews: async () => {
-      reads.push({ method: "bases.listViews" });
+    bases: { listViews: async ({ baseId }) => {
+      reads.push({ method: "bases.listViews", baseId });
+      if (baseId === "companies-base") return [{ id: "accounts-view", slug: "account-directory", config: { sorts: [{ fieldSlug: "name", direction: "asc" }] } }];
       return [{ id: "timeline-view", slug: "activity-timeline", config: { filters: viewFilters, sorts: [{ fieldSlug: "activity-date", direction: viewSort }] } }];
     } },
     changeRequests: { list: async () => ({ changeRequests: [], nextCursor: null }) },
@@ -107,7 +112,7 @@ for (const value of ["call", "email", "meeting", "note"]) {
     assert.deepEqual(ids(records), ids(expected));
     assert.equal(new Set(ids(records)).size, expected.length);
     assert.equal(reads.filter((read) => read.method === "list" && read.baseId === "activities-base").length, 0);
-    assert.equal(reads.filter((read) => read.method === "bases.listViews").length, 1);
+    assert.equal(reads.filter((read) => read.method === "bases.listViews" && read.baseId === "activities-base").length, 1);
     assert.ok(reads.filter((read) => read.method === "listPage").every((read) => read.pageSize === 2));
   });
 }
@@ -135,7 +140,7 @@ for (const options of [{ viewSort: "asc" }, { viewFilters: [{ fieldSlug: "activi
   test(`Activities rejects a view that silently changes timeline membership/order ${JSON.stringify(options)}`, async () => {
     const { provider, reads } = await providerFixture(options);
     await assert.rejects(provider.getState(), /SCHEMA_INCOMPLETE/);
-    assert.equal(reads.some((read) => read.method === "listPage"), false);
+    assert.equal(reads.some((read) => read.method === "listPage" && read.baseId === "activities-base"), false);
   });
 }
 
@@ -145,7 +150,7 @@ test("Activities exposes Load more for filtered pages and hides it after the las
   const elements = Object.fromEntries(["recordTable", "loadMore", "recordHead", "recordList"].map((id) => [id, { dataset: {}, disabled: false }]));
   const state = { filtered: { nextCursor: "next-filtered-page" } };
   const context = vm.createContext({
-    TABLES: { activities: [{ label: "Subject" }] }, state,
+    TABLES: { activities: [{ label: "Subject" }] }, DIRECTORY_TABS: ["contacts", "companies"], state,
     activeBaseKey: () => "activities", listRecords: () => [], narrowed: () => true,
     filteredMatches: () => true, byId: (id) => elements[id],
     setText: () => {}, escapeHtml: String, messages: { noMatches: "No matches" },
