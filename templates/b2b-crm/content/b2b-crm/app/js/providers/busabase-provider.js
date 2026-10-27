@@ -144,7 +144,7 @@ let readContacts;
 
 const contactPage = async (options) => {
   requireRead("records.listPage");
-  requireRead("views.list");
+  requireRead("bases.listViews");
   const page = await readContacts(options);
   return { ...page, records: normalizeRecords(page.records, "contacts") };
 };

@@ -23,7 +23,7 @@ async function providerFixture({ viewSort = "asc", viewFilters = [] } = {}) {
   const config = {
     schema: { folder: { nodeId: "folder" }, bases },
     permissions: {
-      read_procedures: ["records.listPaged", "records.listPage", "records.search", "records.count", "views.list", "changeRequests.listPaged"],
+      read_procedures: ["records.listPaged", "records.listPage", "records.search", "records.count", "bases.listViews", "changeRequests.listPaged"],
       change_request_procedures: [],
     },
   };
@@ -51,8 +51,8 @@ async function providerFixture({ viewSort = "asc", viewFilters = [] } = {}) {
         return { records: rows.slice((input.page - 1) * input.pageSize, input.page * input.pageSize), page: input.page, totalPages, total: rows.length, pageSize: input.pageSize };
       },
     },
-    views: { list: async () => {
-      reads.push({ method: "views.list" });
+    bases: { listViews: async () => {
+      reads.push({ method: "bases.listViews" });
       return [{ id: "alphabetical-view", slug: "contact-directory", config: { filters: viewFilters, sorts: [{ fieldSlug: "full-name", direction: viewSort }] } }];
     } },
     changeRequests: { list: async () => ({ changeRequests: [], nextCursor: null }) },
@@ -100,7 +100,7 @@ test("Contacts initial load and later pages are alphabetically ordered before sl
   assert.deepEqual(ids(records), expectedIds);
   assert.equal(new Set(ids(records)).size, contacts.length);
   assert.equal(reads.filter((read) => read.method === "listPage").length, 3);
-  assert.equal(reads.filter((read) => read.method === "views.list").length, 1);
+  assert.equal(reads.filter((read) => read.method === "bases.listViews").length, 1);
   assert.equal(reads.filter((read) => read.method === "list" && read.baseId === "contacts-base").length, 0);
   assert.equal(reads.filter((read) => read.method === "list" && read.baseId !== "contacts-base").length, 2);
 });

@@ -3,7 +3,7 @@ export const createDirectoryReader = (client, base, viewKey) => {
   const primarySlug = base.fields[0].slug;
   if (!declaration) throw new Error(`SCHEMA_INCOMPLETE: ${viewKey} view is missing`);
   let viewPromise;
-  const resolveView = () => viewPromise ||= client.views.list({ baseId: base.baseId }).then((views) => {
+  const resolveView = () => viewPromise ||= client.bases.listViews({ baseId: base.baseId }).then((views) => {
     const view = views.find((item) => declaration.viewId
       ? item.id === declaration.viewId
       : item.slug === declaration.key);

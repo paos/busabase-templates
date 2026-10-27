@@ -791,7 +791,7 @@ export const appConfig = {
       "nodes.get",
       "records.listPaged",
       "records.listPage",
-      "views.list",
+      "bases.listViews",
       "records.count",
       "records.search",
       "changeRequests.listPaged"
