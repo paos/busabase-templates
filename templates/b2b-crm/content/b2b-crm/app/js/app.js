@@ -1,3 +1,4 @@
+import { dueFollowups } from "./followups.js";
 import { appConfig } from "./config.js";
 import { messages } from "./messages.js";
 import { getProvider } from "./providers/index.js";
@@ -36,7 +37,7 @@ const routeFromHash = (hash = window.location.hash) => {
     tab = DIRECTORY_TABS.includes(parts[1]) ? parts[1] : "companies";
     idPart = DIRECTORY_TABS.includes(parts[1]) ? parts[2] : undefined;
   } else if (!SCREEN_BASE[screen]) {
-    return { screen: "overview", tab, recordId: "", peek: "", query: "", filter: "" };
+    return { screen: "overview", tab, recordId: "", peek: "", query: "", filter: "", due: false };
   }
   let recordId = "";
   try {
@@ -53,6 +54,7 @@ const routeFromHash = (hash = window.location.hash) => {
     peek: !recordId && mode !== "page" ? params.get("peek") || "" : "",
     query: params.get("q") || "",
     filter: params.get("f") || "",
+    due: screen === "activities" && params.get("due") === "1",
   };
 };
 
@@ -71,6 +73,7 @@ const state = {
   // The current search/filter result for one Base. The unfiltered window in
   // `payload.records` stays intact for the Overview, the attention block,
   // relation names and the forms, whatever the list is narrowed to.
+  due: initialRoute.due,
   filtered: null,
   querySequence: 0,
   appliedRoute: "",
@@ -105,7 +108,17 @@ const filteredMatches = () =>
   state.filtered.filter === state.filter;
 // What the active list shows: the narrowed result while a search or filter
 // is on, the loaded window otherwise.
-const listRecords = () => (narrowed() ? (filteredMatches() ? state.filtered.records : []) : recordsForBase());
+const listRecords = () => {
+  if (state.due) {
+    const query = state.query.trim().toLocaleLowerCase();
+    const definition = filterDefinition();
+    return dueActivities().filter((record) =>
+      (!query || recordTitle(record).toLocaleLowerCase().includes(query)) &&
+      (!state.filter || record.fields?.[definition.fieldSlug] === state.filter),
+    );
+  }
+  return narrowed() ? (filteredMatches() ? state.filtered.records : []) : recordsForBase();
+};
 const knownRecords = () => [...(state.payload?.records || []), ...(state.filtered?.records || [])];
 const findRecord = (id, key) => knownRecords().find((record) => record.id === id && (!key || record.baseKey === key));
 const primarySlug = (key = activeBaseKey()) => baseConfig(key)?.fields?.[0]?.slug || "name";
@@ -176,7 +189,7 @@ const formatTimestamp = (value) => {
 const today = () => localDateKey(state.payload?.provider?.now ? new Date(state.payload.provider.now) : new Date());
 const isDue = (value) => Boolean(value) && String(value).slice(0, 10) <= today();
 const dueActivities = () =>
-  recordsForBase("activities").filter((record) => isDue(record.fields?.["next-follow-up-date"]));
+  dueFollowups(recordsForBase("activities"), today());
 
 const setText = (id, value) => {
   const element = byId(id);
@@ -238,6 +251,7 @@ const routeQuery = (extra = {}, { query = state.query, filter = state.filter } =
   const params = new URLSearchParams();
   if (query) params.set("q", query);
   if (filter) params.set("f", filter);
+  if (state.due && state.screen === "activities") params.set("due", "1");
   for (const [key, value] of Object.entries(extra)) if (value) params.set(key, value);
   const text = params.toString();
   return text ? `?${text}` : "";
@@ -318,7 +332,8 @@ const filterDefinition = () => {
 
 function renderToolbar() {
   const base = baseConfig();
-  setText("viewTitle", SCREEN_NAMES[state.screen]);
+  setText("viewTitle", state.due ? "Follow-ups due" : SCREEN_NAMES[state.screen]);
+  byId("allActivities").hidden = !state.due;
   // The view's description lives in the title tooltip, not on the page.
   byId("viewTitle").title = messages.screens[state.screen]?.summary || "";
   byId("directoryTabs").hidden = state.screen !== "directory";
@@ -340,7 +355,7 @@ function renderToolbar() {
   byId("searchInput").placeholder = `Search ${base?.name.toLowerCase() || "records"}`;
   setText("searchLabel", `Search ${base?.name || "records"}`);
   const records = listRecords();
-  const more = narrowed() ? state.filtered?.nextCursor : pageInfo().nextCursor;
+  const more = !state.due && narrowed() ? state.filtered?.nextCursor : pageInfo().nextCursor;
   setText("viewCount", loadedCount(records.length, more));
 }
 
@@ -408,9 +423,9 @@ const TABLES = {
 function renderList() {
   const columns = TABLES[activeBaseKey()];
   const records = listRecords();
-  const waiting = narrowed() && !filteredMatches();
+  const waiting = !state.due && narrowed() && !filteredMatches();
   byId("recordTable").dataset.base = activeBaseKey();
-  byId("loadMore").hidden = narrowed()
+  byId("loadMore").hidden = !state.due && narrowed()
     ? !DIRECTORY_TABS.includes(activeBaseKey()) || !filteredMatches() || !state.filtered.nextCursor
     : !pageInfo().nextCursor;
   if (!byId("loadMore").disabled) setText("loadMore", messages.loadMore);
@@ -552,7 +567,7 @@ function applyBodyState() {
   body.add("ws-has-mobile-bar");
   byId("overviewPage").hidden = !ready || state.screen !== "overview";
   byId("viewPage").hidden = !onView;
-  setText("mobileTitle", SCREEN_NAMES[state.screen]);
+  setText("mobileTitle", state.due ? "Follow-ups due" : SCREEN_NAMES[state.screen]);
 }
 
 function render() {
@@ -600,7 +615,7 @@ async function runQuery() {
   const baseKey = activeBaseKey();
   const query = state.query.trim();
   const filter = state.filter;
-  if (!query && !filter) {
+  if (state.due || (!query && !filter)) {
     state.filtered = null;
     render();
     return;
@@ -676,6 +691,7 @@ function applyRoute() {
   state.directoryTab = route.tab;
   state.query = route.query;
   state.filter = route.filter;
+  state.due = route.due;
   state.selectedRecordId = route.recordId || route.peek;
   state.presentation = route.recordId ? "page" : route.peek ? detailMode() : null;
   setMobileSidebar(false);
@@ -1061,7 +1077,9 @@ byId("overviewPage").addEventListener("click", (event) => {
   const target = targetButton.dataset.overviewTarget;
   if (target === "customers" || target === "prospects") {
     navigate(`#/directory/companies?f=${target === "customers" ? "customer" : "prospect"}`);
-  } else if (target === "activities" || target === "followups") {
+  } else if (target === "followups") {
+    navigate("#/activities?due=1");
+  } else if (target === "activities") {
     navigate("#/activities");
   } else if (target === "missing-next-step") {
     navigate("#/pipeline");
@@ -1091,6 +1109,8 @@ byId("recordFilter").addEventListener("change", (event) => {
   state.filter = event.target.value;
   updateListQuery();
 });
+byId("dueFollowups").addEventListener("click", () => navigate("#/activities?due=1"));
+byId("allActivities").addEventListener("click", () => navigate("#/activities"));
 byId("loadMore").addEventListener("click", loadMore);
 byId("backButton").addEventListener("click", closeDetail);
 byId("detailClose").addEventListener("click", closeDetail);

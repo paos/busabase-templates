@@ -18,7 +18,7 @@
         </div>
         <section class="attention" aria-labelledby="attentionTitle">
           <span class="eyebrow" id="attentionTitle"><i data-lucide="alarm-clock"></i>Follow-up attention</span>
-          <strong id="attentionValue">0</strong>
+          <button id="dueFollowups" type="button" aria-describedby="attentionCopy"><strong id="attentionValue">0</strong></button>
           <span id="attentionCopy">due in the loaded window</span>
           <span class="attention-pending" id="attentionPending">No requests awaiting review</span>
         </section>
@@ -55,6 +55,7 @@
           <header class="ws-toolbar">
             <div class="ws-title"><h1 id="viewTitle">Directory</h1><span class="ws-count" id="viewCount"></span></div>
             <div class="ws-actions">
+              <button class="secondary-button" id="allActivities" type="button" hidden>All activities</button>
               <div class="segmented" id="directoryTabs" aria-label="Directory type">
                 <button class="active" type="button" data-directory-tab="companies">Companies</button>
                 <button type="button" data-directory-tab="contacts">Contacts</button>

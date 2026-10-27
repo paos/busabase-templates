@@ -1,3 +1,4 @@
+import { dueFollowups } from "./followups.js";
 const CLOSED_STAGES = new Set(["closed-won", "closed-lost"]);
 
 const recordsFor = (records, baseKey) => records.filter((record) => record.baseKey === baseKey);
@@ -69,14 +70,7 @@ export function buildOverviewModel({
     return value && (!oldest || value < oldest) ? value : oldest;
   }, "");
   const weekCountPartial = activitiesPartial && (!oldestLoadedActivity || oldestLoadedActivity >= weekStart);
-  const dueActivities = activities
-    .filter((record) => {
-      const value = dateField(record, "next-follow-up-date");
-      return value && value <= today;
-    })
-    .sort((left, right) =>
-      dateField(left, "next-follow-up-date").localeCompare(dateField(right, "next-follow-up-date")),
-    );
+  const dueActivities = dueFollowups(activities, today);
   const closingSoon = deals
     .filter((record) => {
       const value = dateField(record, "expected-close-date");
@@ -260,7 +254,7 @@ export function renderOverviewMarkup(model, helpers) {
     <div class="overview-work-grid">
       <section class="overview-section focus-section" aria-labelledby="todayFocusTitle">
         <header class="overview-section-head"><div><span class="eyebrow icon-label"><i data-lucide="list-todo"></i>Daily worklist</span><h2 id="todayFocusTitle">Today's focus</h2></div><span>${escapeHtml(model.dateLabel)}</span></header>
-        <div class="focus-group"><div class="focus-group-head"><strong class="icon-label"><i data-lucide="alarm-clock"></i>Follow-ups due</strong><span>${model.dueActivities.length}${model.dueActivitiesPartial ? "+" : ""}</span></div>${dueHtml}</div>
+        <div class="focus-group"><div class="focus-group-head"><strong class="icon-label"><i data-lucide="alarm-clock"></i>Follow-ups due</strong><button type="button" data-overview-target="followups">View follow-ups (${model.dueActivities.length}${model.dueActivitiesPartial ? "+" : ""})</button></div>${dueHtml}</div>
         <div class="focus-group"><div class="focus-group-head"><strong class="icon-label"><i data-lucide="calendar-range"></i>Closing in 30 days</strong><span>${model.closingSoon.length}${model.closingSoonPartial ? "+" : ""}</span></div>${closingHtml}</div>
         <div class="focus-group"><div class="focus-group-head"><strong class="icon-label"><i data-lucide="clipboard-check"></i>Pipeline hygiene</strong></div>${missingHtml}</div>
       </section>
