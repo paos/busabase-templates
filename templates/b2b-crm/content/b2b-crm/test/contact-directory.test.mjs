@@ -14,7 +14,7 @@ const contacts = [
 ].map(([id, name, status]) => ({ id, baseId: "contacts-base", fields: { "full-name": name, "contact-status": status } }));
 const expectedIds = ["c1", "c2", "c3", "c4", "c5", "c6"];
 
-async function providerFixture() {
+async function providerFixture({ viewSort = "asc", viewFilters = [] } = {}) {
   const bases = ["contacts", "companies", "deals"].map((key) => ({
     key, baseId: `${key}-base`, readLimit: 2,
     fields: [{ slug: key === "contacts" ? "full-name" : "name" }],
@@ -51,7 +51,10 @@ async function providerFixture() {
         return { records: rows.slice((input.page - 1) * input.pageSize, input.page * input.pageSize), page: input.page, totalPages, total: rows.length, pageSize: input.pageSize };
       },
     },
-    views: { list: async () => [{ id: "alphabetical-view", slug: "contact-directory", config: { filters: [], sorts: [{ fieldSlug: "full-name", direction: "asc" }] } }] },
+    views: { list: async () => {
+      reads.push({ method: "views.list" });
+      return [{ id: "alphabetical-view", slug: "contact-directory", config: { filters: viewFilters, sorts: [{ fieldSlug: "full-name", direction: viewSort }] } }];
+    } },
     changeRequests: { list: async () => ({ changeRequests: [], nextCursor: null }) },
   };
   const context = vm.createContext({ URL, Map, Set, console });
@@ -97,6 +100,7 @@ test("Contacts initial load and later pages are alphabetically ordered before sl
   assert.deepEqual(ids(records), expectedIds);
   assert.equal(new Set(ids(records)).size, contacts.length);
   assert.equal(reads.filter((read) => read.method === "listPage").length, 3);
+  assert.equal(reads.filter((read) => read.method === "views.list").length, 1);
   assert.equal(reads.filter((read) => read.method === "list" && read.baseId === "contacts-base").length, 0);
   assert.equal(reads.filter((read) => read.method === "list" && read.baseId !== "contacts-base").length, 2);
 });
@@ -114,3 +118,11 @@ test("Contacts search and status filter retain alphabetical order across subsequ
   assert.deepEqual(ids(empty.records), []);
   assert.equal(empty.nextCursor, null);
 });
+
+for (const options of [{ viewSort: "desc" }, { viewFilters: [{ fieldSlug: "contact-status", operator: "equals", value: "active" }] }]) {
+  test(`Contacts refuses a saved view that would change the directory's ordering or membership ${JSON.stringify(options)}`, async () => {
+    const { provider, reads } = await providerFixture(options);
+    await assert.rejects(provider.getState(), /SCHEMA_INCOMPLETE/);
+    assert.equal(reads.some((read) => read.method === "listPage"), false);
+  });
+}
