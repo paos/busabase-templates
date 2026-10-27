@@ -159,9 +159,9 @@ export const busabaseProvider = {
     runtimeClient = client;
     runtimeBases = new Map(bases.map((base) => [base.key, base]));
     directoryReaders = new Map([
-      ["contacts", "contact-directory"], ["companies", "account-directory"],
+      ["contacts", "contact-directory"], ["companies", "account-directory"], ["activities", "activity-timeline"],
     ].filter(([key]) => runtimeBases.has(key)).map(([key, viewKey]) =>
-      [key, createDirectoryReader(client, runtimeBases.get(key), viewKey)],
+      [key, createDirectoryReader(client, runtimeBases.get(key), viewKey, key === "activities" ? defaultSortFor(runtimeBases.get(key)) : undefined)],
     ));
     const [pages, changeRequestPage, overviewCounts, baseTotals] = await Promise.all([
       Promise.all(bases.map(async (base) => [base.key, directoryReaders.has(base.key)

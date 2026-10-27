@@ -426,7 +426,7 @@ function renderList() {
   const waiting = !state.due && narrowed() && !filteredMatches();
   byId("recordTable").dataset.base = activeBaseKey();
   byId("loadMore").hidden = !state.due && narrowed()
-    ? !DIRECTORY_TABS.includes(activeBaseKey()) || !filteredMatches() || !state.filtered.nextCursor
+    ? ![...DIRECTORY_TABS, "activities"].includes(activeBaseKey()) || !filteredMatches() || !state.filtered.nextCursor
     : !pageInfo().nextCursor;
   if (!byId("loadMore").disabled) setText("loadMore", messages.loadMore);
   byId("recordHead").innerHTML = `<tr>${columns

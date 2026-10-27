@@ -1,4 +1,4 @@
-export const createDirectoryReader = (client, base, viewKey) => {
+export const createDirectoryReader = (client, base, viewKey, expectedSort = { fieldSlug: base.fields[0].slug, direction: "asc" }) => {
   const declaration = base.views.find((view) => view.key === viewKey);
   const primarySlug = base.fields[0].slug;
   if (!declaration) throw new Error(`SCHEMA_INCOMPLETE: ${viewKey} view is missing`);
@@ -8,8 +8,8 @@ export const createDirectoryReader = (client, base, viewKey) => {
       ? item.id === declaration.viewId
       : item.slug === declaration.key);
     const sort = view?.config?.sorts?.[0];
-    if (!view || view.config?.filters?.length || sort?.fieldSlug !== primarySlug || sort.direction !== "asc") {
-      throw new Error(`SCHEMA_INCOMPLETE: ${viewKey} needs an unfiltered ascending ${primarySlug} sort`);
+    if (!view || view.config?.filters?.length || sort?.fieldSlug !== expectedSort.fieldSlug || sort.direction !== expectedSort.direction) {
+      throw new Error(`SCHEMA_INCOMPLETE: ${viewKey} needs an unfiltered ${expectedSort.direction} ${expectedSort.fieldSlug} sort`);
     }
     return view.id;
   });
