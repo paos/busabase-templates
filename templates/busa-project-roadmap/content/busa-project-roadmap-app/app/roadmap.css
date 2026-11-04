@@ -172,11 +172,12 @@ main {
   border-radius: 10px;
 }
 .timeline-inner {
-  min-width: 1280px;
+  position: relative;
+  min-width: calc(var(--roadmap-label-width, 270px) + 1010px);
 }
 .timeline-row {
   display: grid;
-  grid-template-columns: 270px 1fr;
+  grid-template-columns: var(--roadmap-label-width, 270px) minmax(0, 1fr);
   border-bottom: 1px solid #edf0eb;
   min-height: 55px;
 }
@@ -429,10 +430,10 @@ textarea {
     gap: 20px;
   }
   .timeline-inner {
-    min-width: 1150px;
+    min-width: calc(var(--roadmap-label-width, 220px) + 930px);
   }
   .timeline-row {
-    grid-template-columns: 220px 1fr;
+    grid-template-columns: var(--roadmap-label-width, 220px) minmax(0, 1fr);
   }
   .list {
     min-width: 650px;
@@ -665,4 +666,50 @@ main {
   .toolbar > .actions {
     gap: 6px;
   }
+}
+
+.roadmap-divider {
+  position: absolute;
+  z-index: 3;
+  top: 0;
+  bottom: 0;
+  left: calc(var(--roadmap-label-width, 270px) - 6px);
+  width: 12px;
+  cursor: col-resize;
+  touch-action: none;
+  outline: none;
+}
+.roadmap-divider::before {
+  content: "";
+  position: absolute;
+  left: 5px;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: #bec9be;
+}
+.roadmap-divider::after {
+  content: "";
+  position: absolute;
+  top: 14px;
+  left: 3px;
+  width: 6px;
+  height: 26px;
+  border-radius: 4px;
+  background: #789582;
+}
+.roadmap-divider:hover::before,
+.roadmap-divider:focus-visible::before,
+.resizing-roadmap .roadmap-divider::before {
+  background: #216e4d;
+  width: 3px;
+}
+.roadmap-divider:focus-visible::after {
+  outline: 2px solid #216e4d;
+  outline-offset: 3px;
+}
+.resizing-roadmap,
+.resizing-roadmap * {
+  cursor: col-resize !important;
+  user-select: none !important;
 }
