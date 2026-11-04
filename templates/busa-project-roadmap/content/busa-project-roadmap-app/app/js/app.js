@@ -69,7 +69,7 @@ async function load() {
   });
 }
 function shell(content) {
-  root.innerHTML = `<header><div class="top"><div class="brand"><span class="mark" aria-hidden="true">↗</span><div><h1>Project Roadmap</h1>${demo ? "<small>Demo preview</small>" : ""}</div></div><div class="actions"><button data-action="refresh" ${state.busy ? "disabled" : ""}>Refresh</button></div></div><nav aria-label="Sections">${["roadmap", "projects", "milestones", "help"].map((screen) => `<button data-screen="${screen}" class="${state.screen === screen ? "active" : ""}" ${state.screen === screen ? 'aria-current="page"' : ""}>${screen[0].toUpperCase() + screen.slice(1)}</button>`).join("")}</nav></header><main>${content}<p class="budget">${state.projects.length} projects · ${state.milestones.length} milestones loaded.</p>${Object.entries(
+  root.innerHTML = `<header class="app-header"><div class="brand"><span class="mark" aria-hidden="true">↗</span><div><h1>Project Roadmap</h1>${demo ? "<small>Demo preview</small>" : ""}</div></div><nav aria-label="Sections">${["roadmap", "projects", "milestones", "help"].map((screen) => `<button data-screen="${screen}" class="${state.screen === screen ? "active" : ""}" ${state.screen === screen ? 'aria-current="page"' : ""}>${screen[0].toUpperCase() + screen.slice(1)}</button>`).join("")}</nav><div class="actions"><button data-action="refresh" ${state.busy ? "disabled" : ""}>Refresh</button></div></header><main>${content}<p class="budget">${state.projects.length} projects · ${state.milestones.length} milestones loaded.</p>${Object.entries(
     state.cursors,
   )
     .filter(([, cursor]) => cursor)
@@ -77,7 +77,7 @@ function shell(content) {
     .join("")}</main>`;
 }
 function intro(heading, description) {
-  return `<div class="intro"><div><div class="eyebrow">Team planning</div><h2>${heading}</h2><p class="muted">${description}</p></div><div class="actions"><button data-new="milestones">+ Milestone</button><button class="primary" data-new="projects">+ Project</button></div></div>`;
+  return `<div class="intro"><div><h2>${heading}</h2><p class="muted">${description}</p></div><div class="actions"><button data-new="milestones">+ Milestone</button><button class="primary" data-new="projects">+ Project</button></div></div>`;
 }
 function render() {
   if (state.screen === "roadmap") shell(roadmap());
@@ -111,10 +111,17 @@ function roadmap() {
         ["now", "next", "later"].indexOf(a.fields.lane || "later") -
         ["now", "next", "later"].indexOf(b.fields.lane || "later"),
     );
+  const quarters = [];
+  for (let offset = 0; offset < 84; offset++) {
+    const day = date(addDays(first, offset));
+    const label = `Q${Math.floor(day.getUTCMonth() / 3) + 1} ${day.getUTCFullYear()}`;
+    if (quarters.at(-1)?.label === label) quarters.at(-1).days++;
+    else quarters.push({ label, days: 1 });
+  }
   const conflicts = issues().filter((i) => i.kind === "conflict");
   return (
-    intro("Roadmap", "Projects and milestones, across weeks and quarters.") +
-    `<div class="toolbar"><div class="actions"><label for="lane" class="sr-only">Roadmap horizon</label><select id="lane"><option value="all">Now, Next & Later</option>${["now", "next", "later"].map((l) => `<option ${state.lane === l ? "selected" : ""} value="${l}">${l[0].toUpperCase() + l.slice(1)}</option>`).join("")}</select><button data-action="expand-all">Expand all</button><button data-action="collapse-all">Collapse all</button></div><div class="actions"><button data-shift="-84" aria-label="Previous twelve weeks">←</button><button data-action="today">Today</button><button data-shift="84" aria-label="Next twelve weeks">→</button><small>${e(first)} — ${addDays(first, 83)}</small></div></div>${conflicts.length ? `<div class="warning"><b>${conflicts.length} dependency conflict${conflicts.length === 1 ? "" : "s"} need attention.</b> Review the impact before moving dates. <button class="text-button" data-action="conflicts">View conflicts →</button></div>` : ""}<div class="timeline"><div class="timeline-inner"><div class="timeline-row"><div class="row-label"><b>Projects & milestones</b></div><div class="week-grid">${columns.map((w) => `<span><b>${e(w.quarter)}</b>${e(w.label)}<br>${new Intl.DateTimeFormat("en", { month: "short", day: "numeric", timeZone: "UTC" }).format(date(w.day))}</span>`).join("")}</div></div>${
+    `<div class="roadmap-heading"><h2>Roadmap</h2><div class="actions"><button data-new="milestones">+ Milestone</button><button class="primary" data-new="projects">+ Project</button></div></div>` +
+    `<div class="toolbar"><div class="actions"><label for="lane" class="sr-only">Roadmap horizon</label><select id="lane"><option value="all">Now, Next & Later</option>${["now", "next", "later"].map((l) => `<option ${state.lane === l ? "selected" : ""} value="${l}">${l[0].toUpperCase() + l.slice(1)}</option>`).join("")}</select><button data-action="expand-all">Expand all</button><button data-action="collapse-all">Collapse all</button></div><div class="actions"><button data-shift="-84" aria-label="Previous twelve weeks">←</button><button data-action="today">Today</button><button data-shift="84" aria-label="Next twelve weeks">→</button><small>${e(first)} — ${addDays(first, 83)}</small></div></div>${conflicts.length ? `<div class="warning"><b>${conflicts.length} dependency conflict${conflicts.length === 1 ? "" : "s"}.</b> <button class="text-button" data-action="conflicts">View conflicts →</button></div>` : ""}<div class="timeline"><div class="timeline-inner"><div class="timeline-row"><div class="row-label"><b>Projects & milestones</b></div><div class="calendar-header"><div class="quarter-grid">${quarters.map((q) => `<span style="grid-column:span ${q.days}">${e(q.label)}</span>`).join("")}</div><div class="week-grid">${columns.map((w) => `<span><b>${e(w.label.split(" · ")[0])}</b> ${new Intl.DateTimeFormat("en", { month: "short", day: "numeric", timeZone: "UTC" }).format(date(w.day))}</span>`).join("")}</div></div></div>${
       visible
         .map(
           (p) =>
