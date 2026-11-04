@@ -49,3 +49,16 @@ test("invalid dates and reversed intervals are rejected", () => {
   assert.throws(() => validateDates("2026-12-20", "2026-12-01"));
   assert.doesNotThrow(() => validateDates("", ""));
 });
+
+ test("incomplete dependency schedules never produce suggested dates", () => {
+  for (const rows of [
+    [row("a", "2026-12-01", "2026-12-11"), row("b", "2026-12-07", "2026-12-09", ["a", "unloaded"])],
+    [row("a", "2026-12-01", "2026-12-11"), row("x", null, null), row("b", "2026-12-07", "2026-12-09", ["a", "x"])],
+    [row("a", "2026-12-01", "2026-12-11"), row("b", "2026-12-07", null, ["a"])],
+    [row("a", "2026-12-01", "2026-12-11"), row("b", null, null, ["a"])],
+  ]) {
+    const issues = dependencyIssues(rows);
+    assert.ok(issues.length);
+    assert.ok(issues.every((issue) => !issue.start && !issue.end));
+  }
+});

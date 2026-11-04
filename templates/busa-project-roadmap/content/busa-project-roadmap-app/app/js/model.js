@@ -71,7 +71,11 @@ export function dependencyIssues(rows) {
       continue;
     }
     const known = predecessors.map((id) => byId.get(id)).filter(Boolean);
-    if (known.some((p) => !date(p.fields["end-date"])))
+    const missingFinish = known.some((p) => !date(p.fields["end-date"]));
+    const completeInterval = date(f["start-date"]) && date(f["end-date"]) && f["end-date"] >= f["start-date"];
+    if (predecessors.length && !completeInterval)
+      issues.push({ row, kind: "undated", message: "Set a valid start and finish before requesting suggested dates." });
+    if (missingFinish)
       issues.push({
         row,
         kind: "undated",
@@ -82,7 +86,7 @@ export function dependencyIssues(rows) {
       .filter((v) => date(v))
       .sort()
       .at(-1);
-    if (finish && f["start-date"] && finish >= f["start-date"]) {
+    if (finish && date(f["start-date"]) && finish >= f["start-date"]) {
       const start = addDays(finish, 1),
         duration =
           date(f["end-date"]) && date(f["start-date"])
@@ -92,8 +96,9 @@ export function dependencyIssues(rows) {
         row,
         kind: "conflict",
         message: `Starts before its dependency has finished (${finish}).`,
-        start,
-        end: addDays(start, duration),
+        ...(!unseen.length && !missingFinish && completeInterval
+          ? { start, end: addDays(start, duration) }
+          : {}),
       });
     }
   }

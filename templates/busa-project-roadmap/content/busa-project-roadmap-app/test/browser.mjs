@@ -182,6 +182,34 @@ try {
     path: "coverage/browser/mobile.png",
     fullPage: true,
   });
+  const partial = await browser.newPage();
+  partial.on("pageerror", (error) => errors.push(error.message));
+  await partial.route("**/demo-data.js", async (route) => {
+    const data = {
+      projects: [{ key: "visible", fields: { title: "Visible project", lane: "now" } }],
+      milestones: [{ key: "partial", fields: { title: "Partial milestone", project: "unloaded-project", "depends-on": ["unloaded-dependency"], done: false } }],
+    };
+    await route.fulfill({ contentType: "text/javascript", body: `export const sampleRecords = ${JSON.stringify(data)};` });
+  });
+  await partial.goto(url.href);
+  await partial.getByRole("button", { name: "Review dependencies →" }).click();
+  assert.ok((await partial.locator("#editor").innerText()).includes("outside the loaded records"));
+  assert.equal(await partial.locator("[data-fix]").count(), 0);
+  await partial.locator("#editor [data-close]").first().click();
+  await partial.getByRole("button", { name: "Milestones", exact: true }).click();
+  await partial.getByRole("button", { name: "Partial milestone", exact: true }).click();
+  await partial.getByRole("button", { name: "Edit milestone", exact: true }).click();
+  assert.equal(await partial.locator('select[name="project"]').inputValue(), "unloaded-project");
+  assert.equal(await partial.locator('input[name="depends-on"]:checked').inputValue(), "unloaded-dependency");
+  await partial.getByLabel("Responsible person").fill("Updated owner");
+  await partial.getByRole("button", { name: "Save changes", exact: true }).click();
+  await partial.getByRole("status").filter({ hasText: "Saved." }).waitFor();
+  await partial.getByRole("button", { name: "Partial milestone", exact: true }).click();
+  await partial.getByRole("button", { name: "Edit milestone", exact: true }).click();
+  assert.equal(await partial.locator('select[name="project"]').inputValue(), "unloaded-project");
+  assert.equal(await partial.locator('input[name="depends-on"]:checked').inputValue(), "unloaded-dependency");
+  assert.equal(await partial.getByLabel("Responsible person").inputValue(), "Updated owner");
+  await partial.close();
   assert.deepEqual(errors, []);
   console.log(
     "Browser checks passed: collapse persistence, project-specific columns, wheel scrolling, dark-mode dialog, timeline, proposal, complete, reopen, create, mobile, console.",

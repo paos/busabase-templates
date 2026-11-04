@@ -224,8 +224,8 @@ after your change, run these from the repository root:
 ```bash
 npx busabase-cli@latest --version     # must print 0.98.0 or later
 npx busabase-cli@latest check ./templates/<name>
-npx busabase-cli@latest index . --repo busabase/templates -o templates.json
-npx busabase-cli@latest index . --repo busabase/templates -o templates.json --check
+npx busabase-cli@latest index . --repo paos/busabase-templates -o templates.json
+npx busabase-cli@latest index . --repo paos/busabase-templates -o templates.json --check
 node scripts/check-app-writes.mjs
 node scripts/check-app-sdk-helpers.mjs
 ```
@@ -391,7 +391,7 @@ batch as the SDK update that made it possible.
 
 ```bash
 git push -u origin feat/<name>-<what>
-gh pr create --repo busabase/templates --base main \
+gh pr create --repo paos/busabase-templates --base main \
   --head <your-github-user>:feat/<name>-<what> \
   --title "feat(<name>): add zh-CN demo film" \
   --body-file <a-file-outside-the-repo>.md

@@ -1,6 +1,6 @@
 {
   "format": "busabase-template-index@1",
-  "repo": "busabase/templates",
+  "repo": "paos/busabase-templates",
   "ref": "main",
   "templates": [
     {

@@ -1,8 +1,6 @@
 export async function bindInstalledResources(client, config) {
-  const tree = await client.nodes.list({ parentId: null, depth: 3 });
-  const flatten = (nodes) =>
-    nodes.flatMap((node) => [node, ...flatten(node.children || [])]);
-  const roots = flatten(tree || []).filter(
+  const folders = await client.nodes.list({ types: ["folder"] });
+  const roots = folders.filter(
     (node) =>
       node.type === "folder" &&
       node.metadata?.appId === config.appId &&
