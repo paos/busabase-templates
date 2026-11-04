@@ -1,5 +1,9 @@
 # Working in this repository
 
+This fork publishes the production catalog for `paos/busabase-templates`.
+Generate its index with that repository identity and submit changes to this fork.
+The upstream contribution examples below are not the production publishing target.
+
 Rules for an agent adding or changing a template here. This file is about **this
 repository's conventions** — where things go, what is generated, how work is
 submitted. It does not teach you how to build a Busabase app; that is a separate
@@ -48,8 +52,8 @@ template catalog itself, are not installable templates, and must not be added to
 change to a template:
 
 ```bash
-npx busabase-cli index . --repo busabase/templates -o templates.json
-npx busabase-cli index . --repo busabase/templates -o templates.json --check   # verify
+npx busabase-cli index . --repo paos/busabase-templates -o templates.json
+npx busabase-cli index . --repo paos/busabase-templates -o templates.json --check   # verify
 ```
 
 Whether a template is listed is decided by the same rules that decide how it
@@ -121,7 +125,7 @@ The full contributor workflow (media, new templates, pull requests) is in [`CONT
 Open a pull request. Before you do:
 
 ```bash
-npx busabase-cli index . --repo busabase/templates -o templates.json --check
+npx busabase-cli index . --repo paos/busabase-templates -o templates.json --check
 node scripts/check-app-writes.mjs
 node scripts/check-app-sdk-helpers.mjs
 ```

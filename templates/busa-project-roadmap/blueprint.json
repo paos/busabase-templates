@@ -1,0 +1,531 @@
+{
+  "schema_version": 1,
+  "app": {
+    "name": "Project Roadmap",
+    "slug": "busa-project-roadmap",
+    "description": "Plan projects and milestones across weeks and quarters, spot dependencies and keep completion simple.",
+    "locale": "en",
+    "deployment": "desktop",
+    "space_id": "",
+    "read_only": false,
+    "brand": {
+      "mode": "inferred",
+      "accent": "#176B5B",
+      "logo_path": ""
+    }
+  },
+  "workspace": {
+    "folder": {
+      "name": "Project Roadmap",
+      "slug": "busa-project-roadmap"
+    },
+    "bases": [
+      {
+        "key": "projects",
+        "name": "Projects",
+        "slug": "busa-project-roadmap-projects",
+        "fields": [
+          {
+            "slug": "title",
+            "name": "Name",
+            "type": "text",
+            "required": true,
+            "options": {}
+          },
+          {
+            "slug": "brief",
+            "name": "Purpose, risks and decisions",
+            "type": "longtext",
+            "required": false,
+            "options": {}
+          },
+          {
+            "slug": "owner",
+            "name": "Responsible person",
+            "type": "text",
+            "required": false,
+            "options": {}
+          },
+          {
+            "slug": "lane",
+            "name": "Planning lane",
+            "type": "select",
+            "required": false,
+            "options": {
+              "choices": [
+                {
+                  "id": "now",
+                  "name": "Now"
+                },
+                {
+                  "id": "next",
+                  "name": "Next"
+                },
+                {
+                  "id": "later",
+                  "name": "Later"
+                }
+              ]
+            }
+          },
+          {
+            "slug": "status",
+            "name": "Status",
+            "type": "select",
+            "required": false,
+            "options": {
+              "choices": [
+                {
+                  "id": "planned",
+                  "name": "Planned"
+                },
+                {
+                  "id": "active",
+                  "name": "In progress"
+                },
+                {
+                  "id": "paused",
+                  "name": "Paused"
+                },
+                {
+                  "id": "done",
+                  "name": "Done"
+                }
+              ]
+            }
+          },
+          {
+            "slug": "start-date",
+            "name": "Start date",
+            "type": "date",
+            "required": false,
+            "options": {}
+          },
+          {
+            "slug": "end-date",
+            "name": "Finish date",
+            "type": "date",
+            "required": false,
+            "options": {}
+          },
+          {
+            "slug": "depends-on",
+            "name": "Depends on",
+            "type": "relation",
+            "required": false,
+            "options": {
+              "targetBaseSlug": "busa-project-roadmap-projects",
+              "multiple": true
+            }
+          }
+        ],
+        "read_limit": 50,
+        "views": [
+          {
+            "slug": "projects",
+            "name": "Projects",
+            "type": "table",
+            "config": {
+              "visibleFieldSlugs": [
+                "title",
+                "brief",
+                "owner",
+                "lane",
+                "status",
+                "start-date"
+              ]
+            },
+            "key": "projects"
+          }
+        ],
+        "seed_records": [
+          {
+            "title": "December launch",
+            "brief": "Launch the customer-facing service with working signup, clear copy and a usable product demo. Risks and decisions: confirm launch readiness before publishing.",
+            "owner": "Launch team",
+            "lane": "now",
+            "status": "active",
+            "start-date": "2026-11-02",
+            "end-date": "2026-12-18"
+          },
+          {
+            "title": "Customer portal",
+            "brief": "Give customers a single place to find their account and support information. Done means the pilot team can complete the agreed customer journeys.",
+            "owner": "Product team",
+            "lane": "next",
+            "status": "planned",
+            "start-date": "2026-12-07",
+            "end-date": "2027-01-29"
+          },
+          {
+            "title": "Operations refresh",
+            "brief": "Simplify the internal handover process. Dates will be agreed after the launch.",
+            "owner": "Operations team",
+            "lane": "later",
+            "status": "planned"
+          }
+        ]
+      },
+      {
+        "key": "milestones",
+        "name": "Milestones",
+        "slug": "busa-project-roadmap-milestones",
+        "fields": [
+          {
+            "slug": "title",
+            "name": "Name",
+            "type": "text",
+            "required": true,
+            "options": {}
+          },
+          {
+            "slug": "project",
+            "name": "Project",
+            "type": "relation",
+            "required": true,
+            "options": {
+              "targetBaseSlug": "busa-project-roadmap-projects",
+              "multiple": false
+            }
+          },
+          {
+            "slug": "description",
+            "name": "What done means",
+            "type": "longtext",
+            "required": false,
+            "options": {}
+          },
+          {
+            "slug": "owner",
+            "name": "Responsible person",
+            "type": "text",
+            "required": false,
+            "options": {}
+          },
+          {
+            "slug": "start-date",
+            "name": "Start date",
+            "type": "date",
+            "required": false,
+            "options": {}
+          },
+          {
+            "slug": "end-date",
+            "name": "Finish date",
+            "type": "date",
+            "required": false,
+            "options": {}
+          },
+          {
+            "slug": "done",
+            "name": "Done",
+            "type": "checkbox",
+            "required": false,
+            "options": {}
+          },
+          {
+            "slug": "depends-on",
+            "name": "Depends on",
+            "type": "relation",
+            "required": false,
+            "options": {
+              "targetBaseSlug": "busa-project-roadmap-milestones",
+              "multiple": true
+            }
+          }
+        ],
+        "read_limit": 50,
+        "views": [
+          {
+            "slug": "milestones",
+            "name": "Milestones",
+            "type": "table",
+            "config": {
+              "visibleFieldSlugs": [
+                "title",
+                "project",
+                "description",
+                "owner",
+                "start-date",
+                "end-date"
+              ]
+            },
+            "key": "milestones"
+          }
+        ],
+        "seed_records": [
+          {
+            "title": "Launch page published",
+            "project": "december-launch",
+            "description": "Approved copy is published and the signup link works on desktop and phone.",
+            "owner": "Marketing team",
+            "start-date": "2026-11-09",
+            "end-date": "2026-11-20",
+            "done": true
+          },
+          {
+            "title": "Product demo ready",
+            "project": "december-launch",
+            "description": "A representative customer can complete the core workflow without developer help.",
+            "owner": "Product team",
+            "start-date": "2026-11-23",
+            "end-date": "2026-12-11",
+            "done": false,
+            "depends-on": [
+              "launch-page"
+            ]
+          },
+          {
+            "title": "Customer announcement sent",
+            "project": "december-launch",
+            "description": "The agreed customer announcement has been checked and sent to the launch audience.",
+            "owner": "Marketing team",
+            "start-date": "2026-12-07",
+            "end-date": "2026-12-09",
+            "done": false,
+            "depends-on": [
+              "demo-ready"
+            ]
+          },
+          {
+            "title": "Portal pilot available",
+            "project": "customer-portal",
+            "description": "Pilot users can sign in and find their account and support information.",
+            "owner": "Product team",
+            "start-date": "2026-12-07",
+            "end-date": "2027-01-15",
+            "done": false
+          },
+          {
+            "title": "Handover checklist agreed",
+            "project": "operations-refresh",
+            "description": "The team has one clear checklist and knows who takes over each responsibility.",
+            "owner": "Operations team",
+            "done": false
+          },
+          {
+            "title": "Pricing page published",
+            "project": "december-launch",
+            "description": "The agreed prices and billing terms are published.",
+            "owner": "Commercial team",
+            "start-date": "2026-12-01",
+            "end-date": "2026-12-02",
+            "done": false
+          },
+          {
+            "title": "Support guide ready",
+            "project": "december-launch",
+            "description": "Support can answer the launch questions using a shared guide.",
+            "owner": "Support team",
+            "start-date": "2026-12-01",
+            "end-date": "2026-12-03",
+            "done": false
+          },
+          {
+            "title": "Signup flow verified",
+            "project": "december-launch",
+            "description": "A new customer can register and reach the product.",
+            "owner": "Product team",
+            "start-date": "2026-12-02",
+            "end-date": "2026-12-04",
+            "done": false
+          },
+          {
+            "title": "Launch emails prepared",
+            "project": "december-launch",
+            "description": "Launch emails have final copy and working links.",
+            "owner": "Marketing team",
+            "start-date": "2026-12-03",
+            "end-date": "2026-12-07",
+            "done": false
+          },
+          {
+            "title": "Billing flow verified",
+            "project": "december-launch",
+            "description": "A test purchase creates the correct invoice and subscription.",
+            "owner": "Finance team",
+            "start-date": "2026-12-04",
+            "end-date": "2026-12-08",
+            "done": false
+          },
+          {
+            "title": "Launch reporting ready",
+            "project": "december-launch",
+            "description": "The team can see signups, purchases and support requests.",
+            "owner": "Operations team",
+            "start-date": "2026-12-07",
+            "end-date": "2026-12-09",
+            "done": false
+          },
+          {
+            "title": "Team training completed",
+            "project": "december-launch",
+            "description": "Customer-facing staff can demonstrate the launch workflow.",
+            "owner": "Support team",
+            "start-date": "2026-12-08",
+            "end-date": "2026-12-10",
+            "done": false
+          },
+          {
+            "title": "Help articles published",
+            "project": "december-launch",
+            "description": "The essential setup and troubleshooting articles are available.",
+            "owner": "Support team",
+            "start-date": "2026-12-09",
+            "end-date": "2026-12-11",
+            "done": false
+          },
+          {
+            "title": "Rollback plan rehearsed",
+            "project": "december-launch",
+            "description": "The release team has rehearsed recovery and knows the decision owner.",
+            "owner": "Operations team",
+            "start-date": "2026-12-10",
+            "end-date": "2026-12-14",
+            "done": false
+          },
+          {
+            "title": "Release checklist completed",
+            "project": "december-launch",
+            "description": "The release checklist has evidence for every required item.",
+            "owner": "Product team",
+            "start-date": "2026-12-11",
+            "end-date": "2026-12-15",
+            "done": false
+          },
+          {
+            "title": "Launch readiness confirmed",
+            "project": "december-launch",
+            "description": "The team has checked all agreed readiness criteria.",
+            "owner": "Launch team",
+            "start-date": "2026-12-14",
+            "end-date": "2026-12-16",
+            "done": false
+          },
+          {
+            "title": "Launch results reviewed",
+            "project": "december-launch",
+            "description": "The team has reviewed the first results and recorded follow-up work.",
+            "owner": "Launch team",
+            "start-date": "2026-12-17",
+            "end-date": "2026-12-18",
+            "done": false
+          }
+        ]
+      }
+    ],
+    "docs": [],
+    "drives": [],
+    "whiteboards": [],
+    "forms": [],
+    "workflows": [],
+    "html": [],
+    "vault_requirements": [],
+    "integrations": [],
+    "relations": []
+  },
+  "ui": {
+    "primary_base": "projects",
+    "list_columns": {
+      "projects": [
+        "title",
+        "owner",
+        "lane",
+        "status",
+        "start-date",
+        "end-date"
+      ],
+      "milestones": [
+        "title",
+        "project",
+        "owner",
+        "end-date",
+        "done"
+      ]
+    },
+    "detail_modes": {
+      "projects": "page",
+      "milestones": "drawer"
+    },
+    "density": "default",
+    "summary": "See when projects and milestones belong, and what depends on what.",
+    "screens": [
+      {
+        "id": "roadmap",
+        "name": "Roadmap",
+        "purpose": "Weekly timeline grouped by project with quarter headings.",
+        "data_sources": [
+          "projects",
+          "milestones"
+        ]
+      },
+      {
+        "id": "projects",
+        "name": "Projects",
+        "purpose": "Edit purpose, owner and planning lane.",
+        "data_sources": [
+          "projects"
+        ]
+      },
+      {
+        "id": "milestones",
+        "name": "Milestones",
+        "purpose": "Track deliverables and mark Done without an acceptance step.",
+        "data_sources": [
+          "milestones"
+        ]
+      }
+    ],
+    "attention_states": [
+      "dependency_conflict",
+      "unscheduled"
+    ],
+    "actions": [
+      {
+        "id": "edit-project",
+        "label": "Edit project",
+        "kind": "change_request",
+        "base": "projects",
+        "fields": [
+          "title",
+          "brief",
+          "owner",
+          "lane",
+          "status"
+        ]
+      },
+      {
+        "id": "edit-milestone",
+        "label": "Edit milestone",
+        "kind": "change_request",
+        "base": "milestones",
+        "fields": [
+          "title",
+          "description",
+          "owner",
+          "done"
+        ]
+      }
+    ]
+  },
+  "onboarding": {
+    "version": 1,
+    "required_fields": [],
+    "completion_resource": "projects",
+    "rationale": "No external integration or operator-specific configuration is required."
+  },
+  "permissions": {
+    "read_procedures": [
+      "nodes.list",
+      "nodes.get",
+      "bases.get",
+      "records.list",
+      "records.get"
+    ],
+    "change_request_procedures": [
+      "bases.createChangeRequest",
+      "records.changeRequest"
+    ]
+  },
+  "approval": "Confirmed by user: Projects contain Milestones; anyone with edit access may complete or reopen a milestone, with no acceptance step. Weekly and quarterly roadmap, dependencies and reviewed schedule proposals retained."
+}

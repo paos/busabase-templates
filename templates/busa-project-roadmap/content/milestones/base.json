@@ -1,0 +1,108 @@
+{
+  "name": "Milestones",
+  "description": "What must be delivered, when, and what done means.",
+  "position": 1,
+  "agentPrompts": [
+    {
+      "key": "record-completion",
+      "label": "Mark a milestone done",
+      "body": "Read the `busa-project-roadmap` skill in this folder, then mark the milestone I name done and preserve its definition of done. Anyone with edit access can complete it; no acceptance step is required.",
+      "intent": "change"
+    },
+    {
+      "key": "check-dates",
+      "label": "Check milestone dependencies",
+      "body": "Read the `busa-project-roadmap` skill in this folder, then check the dated milestones I name for dependency conflicts and missing dates. Explain suggested date changes without applying them.",
+      "intent": "read-only"
+    }
+  ],
+  "fields": [
+    {
+      "slug": "title",
+      "name": "Name",
+      "type": "text",
+      "required": true,
+      "position": 0,
+      "options": {}
+    },
+    {
+      "slug": "project",
+      "name": "Project",
+      "type": "relation",
+      "required": true,
+      "position": 1,
+      "options": {
+        "targetBaseSlug": "projects",
+        "multiple": false
+      }
+    },
+    {
+      "slug": "description",
+      "name": "What done means",
+      "type": "longtext",
+      "required": false,
+      "position": 2,
+      "options": {}
+    },
+    {
+      "slug": "owner",
+      "name": "Responsible person",
+      "type": "text",
+      "required": false,
+      "position": 3,
+      "options": {}
+    },
+    {
+      "slug": "start-date",
+      "name": "Start date",
+      "type": "date",
+      "required": false,
+      "position": 4,
+      "options": {}
+    },
+    {
+      "slug": "end-date",
+      "name": "Finish date",
+      "type": "date",
+      "required": false,
+      "position": 5,
+      "options": {}
+    },
+    {
+      "slug": "done",
+      "name": "Done",
+      "type": "checkbox",
+      "required": false,
+      "position": 6,
+      "options": {}
+    },
+    {
+      "slug": "depends-on",
+      "name": "Depends on",
+      "type": "relation",
+      "required": false,
+      "position": 7,
+      "options": {
+        "targetBaseSlug": "milestones",
+        "multiple": true
+      }
+    }
+  ],
+  "views": [
+    {
+      "slug": "milestones",
+      "name": "Milestones",
+      "type": "table",
+      "config": {
+        "visibleFieldSlugs": [
+          "title",
+          "project",
+          "description",
+          "owner",
+          "start-date",
+          "end-date"
+        ]
+      }
+    }
+  ]
+}
