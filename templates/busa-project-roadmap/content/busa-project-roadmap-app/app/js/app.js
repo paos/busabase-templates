@@ -18,6 +18,23 @@ const root = document.querySelector("#app"),
   dialog = document.querySelector("#editor");
 const demo = new URLSearchParams(location.search).get("demo") === "1";
 const provider = demo ? createDemoProvider() : createLiveProvider();
+// Presentation preferences only; project and milestone data stay in Busa.
+const collapseKey = `project-roadmap:collapsed:v1:${location.pathname}:${demo ? "demo" : "live"}`;
+let collapsedProjects = new Set();
+try {
+  const saved = JSON.parse(localStorage.getItem(collapseKey) || "[]");
+  if (Array.isArray(saved))
+    collapsedProjects = new Set(saved.filter((id) => typeof id === "string"));
+} catch {
+  /* Storage can be unavailable in restricted browser contexts. */
+}
+function rememberCollapsed() {
+  try {
+    localStorage.setItem(collapseKey, JSON.stringify([...collapsedProjects]));
+  } catch {
+    notify("Your browser could not save the roadmap display preference.");
+  }
+}
 const state = {
   projects: [],
   milestones: [],
@@ -52,7 +69,7 @@ async function load() {
   });
 }
 function shell(content) {
-  root.innerHTML = `<header><div class="top"><div class="brand"><span class="mark" aria-hidden="true">↗</span><div><h1>Project Roadmap</h1><small>${e(provider.name)}</small></div></div><div class="actions"><span class="muted">A clear path from plans to done</span><button data-action="refresh" ${state.busy ? "disabled" : ""}>Refresh</button></div></div><nav aria-label="Sections">${["roadmap", "projects", "milestones", "help"].map((screen) => `<button data-screen="${screen}" class="${state.screen === screen ? "active" : ""}" ${state.screen === screen ? 'aria-current="page"' : ""}>${screen[0].toUpperCase() + screen.slice(1)}</button>`).join("")}</nav></header><main>${content}<p class="budget">${state.projects.length} projects · ${state.milestones.length} milestones loaded.</p>${Object.entries(
+  root.innerHTML = `<header><div class="top"><div class="brand"><span class="mark" aria-hidden="true">↗</span><div><h1>Project Roadmap</h1>${demo ? "<small>Demo preview</small>" : ""}</div></div><div class="actions"><button data-action="refresh" ${state.busy ? "disabled" : ""}>Refresh</button></div></div><nav aria-label="Sections">${["roadmap", "projects", "milestones", "help"].map((screen) => `<button data-screen="${screen}" class="${state.screen === screen ? "active" : ""}" ${state.screen === screen ? 'aria-current="page"' : ""}>${screen[0].toUpperCase() + screen.slice(1)}</button>`).join("")}</nav></header><main>${content}<p class="budget">${state.projects.length} projects · ${state.milestones.length} milestones loaded.</p>${Object.entries(
     state.cursors,
   )
     .filter(([, cursor]) => cursor)
@@ -97,17 +114,17 @@ function roadmap() {
   const conflicts = issues().filter((i) => i.kind === "conflict");
   return (
     intro("Roadmap", "Projects and milestones, across weeks and quarters.") +
-    `<div class="toolbar"><div class="actions"><label for="lane" class="sr-only">Roadmap horizon</label><select id="lane"><option value="all">Now, Next & Later</option>${["now", "next", "later"].map((l) => `<option ${state.lane === l ? "selected" : ""} value="${l}">${l[0].toUpperCase() + l.slice(1)}</option>`).join("")}</select></div><div class="actions"><button data-shift="-84" aria-label="Previous twelve weeks">←</button><button data-action="today">Today</button><button data-shift="84" aria-label="Next twelve weeks">→</button><small>${e(first)} — ${addDays(first, 83)}</small></div></div>${conflicts.length ? `<div class="warning"><b>${conflicts.length} dependency conflict${conflicts.length === 1 ? "" : "s"} need attention.</b> Review the impact before moving dates. <button class="text-button" data-action="conflicts">View conflicts →</button></div>` : ""}<div class="timeline"><div class="timeline-inner"><div class="timeline-row"><div class="row-label"><b>Projects & milestones</b></div><div class="week-grid">${columns.map((w) => `<span><b>${e(w.quarter)}</b>${e(w.label)}<br>${new Intl.DateTimeFormat("en", { month: "short", day: "numeric", timeZone: "UTC" }).format(date(w.day))}</span>`).join("")}</div></div>${
+    `<div class="toolbar"><div class="actions"><label for="lane" class="sr-only">Roadmap horizon</label><select id="lane"><option value="all">Now, Next & Later</option>${["now", "next", "later"].map((l) => `<option ${state.lane === l ? "selected" : ""} value="${l}">${l[0].toUpperCase() + l.slice(1)}</option>`).join("")}</select><button data-action="expand-all">Expand all</button><button data-action="collapse-all">Collapse all</button></div><div class="actions"><button data-shift="-84" aria-label="Previous twelve weeks">←</button><button data-action="today">Today</button><button data-shift="84" aria-label="Next twelve weeks">→</button><small>${e(first)} — ${addDays(first, 83)}</small></div></div>${conflicts.length ? `<div class="warning"><b>${conflicts.length} dependency conflict${conflicts.length === 1 ? "" : "s"} need attention.</b> Review the impact before moving dates. <button class="text-button" data-action="conflicts">View conflicts →</button></div>` : ""}<div class="timeline"><div class="timeline-inner"><div class="timeline-row"><div class="row-label"><b>Projects & milestones</b></div><div class="week-grid">${columns.map((w) => `<span><b>${e(w.quarter)}</b>${e(w.label)}<br>${new Intl.DateTimeFormat("en", { month: "short", day: "numeric", timeZone: "UTC" }).format(date(w.day))}</span>`).join("")}</div></div>${
       visible
         .map(
           (p) =>
-            `<div class="timeline-row project-row"><div class="row-label"><button class="text-button" data-open="${e(p.id)}" data-kind="projects">${e(title(p))}</button><span class="lane">${e(p.fields.lane || "later")}</span></div><div class="track">${bar(p, "projects", first)}</div></div>${state.milestones
+            `<div class="timeline-row project-row"><div class="row-label"><button class="project-toggle" data-toggle-project="${e(p.id)}" aria-expanded="${!collapsedProjects.has(p.id)}" aria-controls="project-milestones-${e(p.id)}" aria-label="${collapsedProjects.has(p.id) ? "Expand" : "Collapse"} ${e(title(p))}">${collapsedProjects.has(p.id) ? "▸" : "▾"}</button><button class="text-button" data-open="${e(p.id)}" data-kind="projects">${e(title(p))}</button><span class="lane">${e(p.fields.lane || "later")}</span></div><div class="track">${bar(p, "projects", first)}</div></div><div id="project-milestones-${e(p.id)}" ${collapsedProjects.has(p.id) ? "hidden" : ""}>${state.milestones
               .filter((m) => refs(m.fields.project).includes(p.id))
               .map(
                 (m) =>
                   `<div class="timeline-row"><div class="row-label child"><span class="dot">${m.fields.done ? "✓" : "◇"}</span><button class="text-button" data-open="${e(m.id)}" data-kind="milestones">${e(title(m))}</button></div><div class="track">${bar(m, "milestones", first)}</div></div>`,
               )
-              .join("")}`,
+              .join("")}</div>`,
         )
         .join("") ||
       '<div class="empty">No projects in this horizon. Add a project to begin.</div>'
@@ -120,8 +137,37 @@ function projects() {
     `<div class="card table-scroll"><table class="list"><thead><tr><th>Project</th><th>Owner</th><th>Horizon</th><th>Status</th><th>Planned finish</th></tr></thead><tbody>${state.projects.map((p) => `<tr><td><button class="text-button" data-open="${e(p.id)}" data-kind="projects">${e(title(p))}</button></td><td>${e(p.fields.owner || "Unassigned")}</td><td><span class="lane">${e(p.fields.lane || "later")}</span></td><td>${e(p.fields.status || "planned")}</td><td>${e(p.fields["end-date"] || "Unscheduled")}</td></tr>`).join("")}</tbody></table>${!state.projects.length ? '<p class="empty">Add your first project.</p>' : ""}</div>`
   );
 }
-function milestoneTable(rows) {
-  return `<div class="table-scroll"><table class="list"><thead><tr><th>Milestone</th><th>Project</th><th>Owner</th><th>Finish</th><th>Completion</th></tr></thead><tbody>${rows.map((m) => `<tr><td><button class="text-button" data-open="${e(m.id)}" data-kind="milestones">${e(title(m))}</button></td><td>${e(projectOf(m) ? title(projectOf(m)) : "Project not loaded")}</td><td>${e(m.fields.owner || "Unassigned")}</td><td>${e(m.fields["end-date"] || "Unscheduled")}</td><td>${m.fields.done ? '<span class="badge-done">✓ Done</span>' : `<button data-done="${e(m.id)}" ${state.busy ? "disabled" : ""}>Mark done</button>`}</td></tr>`).join("")}</tbody></table>${!rows.length ? '<p class="empty">No milestones yet.</p>' : ""}</div>`;
+function dependencySummary(row) {
+  const ids = refs(row.fields["depends-on"]);
+  if (!ids.length) return '<span class="muted">None</span>';
+  return `<ul class="dependency-links">${ids
+    .map((id) => {
+      const dependency = state.milestones.find((item) => item.id === id);
+      return `<li>${dependency ? `<button class="text-button" data-open="${e(id)}" data-kind="milestones">${e(title(dependency))}</button>` : '<span class="muted">Dependency not loaded</span>'}</li>`;
+    })
+    .join("")}</ul>`;
+}
+function dependencyEditor(kind, id, selected) {
+  const options = state[kind].filter((item) => item.id !== id);
+  return `<fieldset class="dependencies"><legend>Dependencies</legend><p class="muted">Select work that must finish first.</p><div id="dependency-selected" aria-live="polite"></div><label class="sr-only" for="dependency-search">Find dependencies</label><input type="search" id="dependency-search" placeholder="Search ${kind}…"><div class="dependency-options">${options.map((item) => `<label class="dependency-choice" data-dependency-title="${e(title(item).toLowerCase())}"><input type="checkbox" name="depends-on" value="${e(item.id)}" ${selected.includes(item.id) ? "checked" : ""}><span>${e(title(item))}</span></label>`).join("")}</div><p id="dependency-empty" class="muted" ${options.length ? "hidden" : ""}>No matching ${kind}.</p><small id="dependency-count"></small></fieldset>`;
+}
+function updateDependencySelection() {
+  const inputs = [
+    ...dialog.querySelectorAll('input[name="depends-on"]:checked'),
+  ];
+  dialog.querySelector("#dependency-count").textContent =
+    `${inputs.length} selected`;
+  dialog.querySelector("#dependency-selected").innerHTML = inputs.length
+    ? inputs
+        .map(
+          (input) =>
+            `<span class="dependency-chip">${e(input.nextElementSibling.textContent)}</span>`,
+        )
+        .join("")
+    : '<span class="muted">No dependencies selected</span>';
+}
+function milestoneTable(rows, showProject = true) {
+  return `<div class="table-scroll"><table class="list"><thead><tr><th>Milestone</th>${showProject ? "<th>Project</th>" : ""}<th>Owner</th><th>Dependencies</th><th>Finish</th><th>Completion</th></tr></thead><tbody>${rows.map((m) => `<tr><td><button class="text-button" data-open="${e(m.id)}" data-kind="milestones">${e(title(m))}</button></td>${showProject ? `<td>${e(projectOf(m) ? title(projectOf(m)) : "Project not loaded")}</td>` : ""}<td>${e(m.fields.owner || "Unassigned")}</td><td class="dependency-cell">${dependencySummary(m)}</td><td>${e(m.fields["end-date"] || "Unscheduled")}</td><td>${m.fields.done ? '<span class="badge-done">✓ Done</span>' : `<button data-done="${e(m.id)}" ${state.busy ? "disabled" : ""}>Mark done</button>`}</td></tr>`).join("")}</tbody></table>${!rows.length ? '<p class="empty">No milestones yet.</p>' : ""}</div>`;
 }
 function milestones() {
   return (
@@ -137,7 +183,10 @@ function projectDetail() {
     state.project = null;
     return projects();
   }
-  return `<button class="text-button" data-action="back">← All projects</button><div class="intro"><div><h2>${e(title(p))}</h2><span class="lane">${e(p.fields.lane || "later")}</span></div><div class="actions"><button data-edit="${e(p.id)}" data-kind="projects">Edit project</button><button data-schedule="${e(p.id)}" data-kind="projects">Propose dates</button><button class="primary" data-new="milestones">+ Milestone</button></div></div><div class="project-detail"><div class="card"><h3>Purpose, risks and decisions</h3><p class="definition">${e(p.fields.brief || "Add the purpose of this project and any important risks or decisions.")}</p></div><div class="card"><p class="detail-label">Responsible person</p><p>${e(p.fields.owner || "Unassigned")}</p><p class="detail-label">Planned dates</p><p>${e(p.fields["start-date"] || "Not set")} → ${e(p.fields["end-date"] || "Not set")}</p><p class="detail-label">Status</p><p>${e(p.fields.status || "planned")}</p></div></div><div class="card"><h3>Milestones</h3>${milestoneTable(state.milestones.filter((m) => refs(m.fields.project).includes(p.id)))}</div>`;
+  return `<button class="text-button" data-action="back">← All projects</button><div class="intro"><div><h2>${e(title(p))}</h2><span class="lane">${e(p.fields.lane || "later")}</span></div><div class="actions"><button data-edit="${e(p.id)}" data-kind="projects">Edit project</button><button data-schedule="${e(p.id)}" data-kind="projects">Propose dates</button><button class="primary" data-new="milestones">+ Milestone</button></div></div><div class="project-detail"><div class="card"><h3>Purpose, risks and decisions</h3><p class="definition">${e(p.fields.brief || "Add the purpose of this project and any important risks or decisions.")}</p></div><div class="card"><p class="detail-label">Responsible person</p><p>${e(p.fields.owner || "Unassigned")}</p><p class="detail-label">Planned dates</p><p>${e(p.fields["start-date"] || "Not set")} → ${e(p.fields["end-date"] || "Not set")}</p><p class="detail-label">Status</p><p>${e(p.fields.status || "planned")}</p></div></div><div class="card"><h3>Milestones</h3>${milestoneTable(
+    state.milestones.filter((m) => refs(m.fields.project).includes(p.id)),
+    false,
+  )}</div>`;
 }
 function help() {
   return `<div class="card help"><h2>Using Project Roadmap</h2>
@@ -147,7 +196,7 @@ function help() {
   <h3>Later — future work without a current commitment</h3><p>Use Later for work worth keeping on the roadmap that the team has not committed to starting soon. Dates can stay empty until the plan is clearer. <b>Example:</b> Operations refresh is Later while its priority and timing are still being decided.</p>
   <h3>When to move a project</h3><p>Move Next to Now when the team is ready to begin. When current work finishes, mark the project Done and choose the next ready project. Move work to Later if it loses priority. Review these choices together when you review the roadmap.</p>
   <p><b>Priority and dates are separate.</b> Now / Next / Later describes focus and planning confidence; start and finish dates place the work in specific weeks and quarters. The labels have no fixed number of weeks. Changing a label does not change dates or move a timeline bar.</p>
-  <h3>Milestones</h3><p>A milestone is a concrete outcome within a project. “What done means” describes the finished result. The owner is responsible for progress; anyone with edit access can mark it Done. There is no acceptance step. Reopen it by clearing Done in Edit milestone if work needs revisiting.</p>
+  <h3>Milestones</h3><p>A milestone is a concrete outcome within a project. “Completion criteria” describes the finished result. The owner is responsible for progress; anyone with edit access can mark it Done. There is no acceptance step. Reopen it by clearing Done in Edit milestone if work needs revisiting.</p>
   <h3>Dependencies and date proposals</h3><p>A dependency must finish before the dependent work starts. Amber bars flag conflicts among loaded records. Suggested dates preserve the work's duration. Submit a date proposal for review in Busa; the current schedule stays in place until approved.</p>
   <h3>Access and loading</h3><p>The app uses your existing Busa permissions. A normal edit is saved or submitted for review according to your access. Each load reads at most 50 records per table. Use Load more to include additional records.</p></div>`;
 }
@@ -178,18 +227,9 @@ function edit(kind, id) {
         ? "Edit " + (isProject ? "project" : "milestone")
         : "New " + (isProject ? "project" : "milestone"),
     ) +
-      `<form id="edit-form">${field("Name", "title", f.title)}${!isProject ? `<label>Project<select name="project" required>${state.projects.map((p) => `<option value="${e(p.id)}" ${refs(f.project).includes(p.id) || (!row && state.project === p.id) ? "selected" : ""}>${e(title(p))}</option>`).join("")}</select></label>` : ""}<label>${isProject ? "Purpose, risks and decisions" : "What done means"}<textarea name="${isProject ? "brief" : "description"}">${e(f[isProject ? "brief" : "description"] || "")}</textarea></label>${field("Responsible person", "owner", f.owner)}${isProject ? `<div class="form-grid"><label>Horizon<select name="lane">${options(["now", "next", "later"], f.lane || "later")}</select></label><label>Status<select name="status">${options(["planned", "active", "paused", "done"], f.status || "planned")}</select></label></div>` : `<label class="checkbox"><input name="done" type="checkbox" ${f.done ? "checked" : ""}>Done — no acceptance step</label>`}${!row ? `<div class="form-grid">${field("Planned start", "start-date", "", "date")}${field("Planned finish", "end-date", "", "date")}</div>` : '<p class="muted">Use “Propose dates” to change the schedule for review.</p>'}<label>Depends on<select name="depends-on" multiple size="3">${state[
-        kind
-      ]
-        .filter((r) => r.id !== id)
-        .map(
-          (r) =>
-            `<option value="${e(r.id)}" ${refs(f["depends-on"]).includes(r.id) ? "selected" : ""}>${e(title(r))}</option>`,
-        )
-        .join(
-          "",
-        )}</select><small>Select work that must finish first. Dependencies are optional.</small></label><div class="error" role="alert"></div><div class="form-footer"><button type="button" data-close>Cancel</button><button class="primary" type="submit">${row ? "Save changes" : "Create " + (isProject ? "project" : "milestone")}</button></div></form>`,
+      `<form id="edit-form">${field("Name", "title", f.title)}${!isProject ? `<label>Project<select name="project" required>${state.projects.map((p) => `<option value="${e(p.id)}" ${refs(f.project).includes(p.id) || (!row && state.project === p.id) ? "selected" : ""}>${e(title(p))}</option>`).join("")}</select></label>` : ""}<label>${isProject ? "Purpose, risks and decisions" : "Completion criteria"}<textarea name="${isProject ? "brief" : "description"}">${e(f[isProject ? "brief" : "description"] || "")}</textarea></label>${field("Responsible person", "owner", f.owner)}${isProject ? `<div class="form-grid"><label>Horizon<select name="lane">${options(["now", "next", "later"], f.lane || "later")}</select></label><label>Status<select name="status">${options(["planned", "active", "paused", "done"], f.status || "planned")}</select></label></div>` : `<label class="checkbox"><input name="done" type="checkbox" ${f.done ? "checked" : ""}>Done — no acceptance step</label>`}${!row ? `<div class="form-grid">${field("Planned start", "start-date", "", "date")}${field("Planned finish", "end-date", "", "date")}</div>` : '<p class="muted">Use “Propose dates” to change the schedule for review.</p>'}${dependencyEditor(kind, id, refs(f["depends-on"]))}<div class="error" role="alert"></div><div class="form-footer"><button type="button" data-close>Cancel</button><button class="primary" type="submit">${row ? "Save changes" : "Create " + (isProject ? "project" : "milestone")}</button></div></form>`,
   );
+  updateDependencySelection();
   const key = crypto.randomUUID();
   dialog.querySelector("form").onsubmit = async (event) => {
     event.preventDefault();
@@ -231,7 +271,7 @@ function milestoneDetail(id) {
   const m = state.milestones.find((m) => m.id === id);
   showDialog(
     dialogHeader(title(m)) +
-      `<p class="muted">${e(projectOf(m) ? title(projectOf(m)) : "Project not loaded")}</p><h3>What done means</h3><p class="definition">${e(m.fields.description || "Describe the finished result.")}</p><p><b>Responsible:</b> ${e(m.fields.owner || "Unassigned")}</p><p><b>Dates:</b> ${e(m.fields["start-date"] || "Not set")} → ${e(m.fields["end-date"] || "Not set")}</p><p>${m.fields.done ? "✓ Done" : "In progress"}</p><div class="actions"><button data-edit="${e(id)}" data-kind="milestones">Edit milestone</button><button data-schedule="${e(id)}" data-kind="milestones">Propose dates</button>${!m.fields.done ? `<button class="primary" data-done="${e(id)}">Mark done</button>` : ""}</div>`,
+      `<p class="muted">${e(projectOf(m) ? title(projectOf(m)) : "Project not loaded")}</p><h3>Dependencies</h3>${dependencySummary(m)}<h3>Completion criteria</h3><p class="definition">${e(m.fields.description || "Describe the finished result.")}</p><p><b>Responsible:</b> ${e(m.fields.owner || "Unassigned")}</p><p><b>Dates:</b> ${e(m.fields["start-date"] || "Not set")} → ${e(m.fields["end-date"] || "Not set")}</p><p>${m.fields.done ? "✓ Done" : "In progress"}</p><div class="actions"><button data-edit="${e(id)}" data-kind="milestones">Edit milestone</button><button data-schedule="${e(id)}" data-kind="milestones">Propose dates</button>${!m.fields.done ? `<button class="primary" data-done="${e(id)}">Mark done</button>` : ""}</div>`,
   );
 }
 function schedule(kind, id, suggestion) {
@@ -319,7 +359,30 @@ async function click(event) {
     dialog.close();
     return;
   }
-  if (b.dataset.screen) {
+  if (
+    b.dataset.toggleProject ||
+    ["expand-all", "collapse-all"].includes(b.dataset.action)
+  ) {
+    const id = b.dataset.toggleProject;
+    const scroll = root.querySelector(".timeline")?.scrollLeft || 0;
+    if (id) {
+      if (collapsedProjects.has(id)) collapsedProjects.delete(id);
+      else collapsedProjects.add(id);
+    } else {
+      for (const project of state.projects) {
+        if (b.dataset.action === "collapse-all")
+          collapsedProjects.add(project.id);
+        else collapsedProjects.delete(project.id);
+      }
+    }
+    rememberCollapsed();
+    render();
+    root.querySelector(".timeline").scrollLeft = scroll;
+    const selector = id
+      ? `[data-toggle-project="${CSS.escape(id)}"]`
+      : `[data-action="${b.dataset.action}"]`;
+    root.querySelector(selector)?.focus({ preventScroll: true });
+  } else if (b.dataset.screen) {
     state.screen = b.dataset.screen;
     state.project = null;
     render();
@@ -330,6 +393,7 @@ async function click(event) {
     if (dialog.open) dialog.close();
     edit(b.dataset.kind, b.dataset.edit);
   } else if (b.dataset.open) {
+    if (dialog.open) dialog.close();
     if (b.dataset.kind === "projects") {
       state.screen = "projects";
       state.project = b.dataset.open;
@@ -393,7 +457,19 @@ async function click(event) {
 document.addEventListener("click", (event) => {
   click(event).catch((error) => notify(error.message));
 });
+document.addEventListener("input", (event) => {
+  if (event.target.id !== "dependency-search") return;
+  const query = event.target.value.trim().toLowerCase();
+  const options = [...dialog.querySelectorAll(".dependency-choice")];
+  options.forEach((option) => {
+    option.hidden = !option.dataset.dependencyTitle.includes(query);
+  });
+  dialog.querySelector("#dependency-empty").hidden = options.some(
+    (option) => !option.hidden,
+  );
+});
 document.addEventListener("change", (event) => {
+  if (event.target.name === "depends-on") updateDependencySelection();
   if (event.target.id === "lane") {
     state.lane = event.target.value;
     render();

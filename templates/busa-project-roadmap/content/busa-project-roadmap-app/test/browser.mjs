@@ -18,10 +18,43 @@ try {
   await page.emulateMedia({ colorScheme: "dark" });
   await page.goto(url.href);
   await page.getByRole("heading", { name: "Roadmap", exact: true }).waitFor();
+  const visibleMilestones = () =>
+    page.locator(".row-label.child:visible").count();
+  assert.equal(await visibleMilestones(), 17);
+  await page
+    .getByRole("button", { name: "Collapse December launch", exact: true })
+    .click();
+  assert.equal(await visibleMilestones(), 2);
+  await page.reload();
+  await page
+    .getByRole("button", { name: "Expand December launch", exact: true })
+    .waitFor();
+  assert.equal(await visibleMilestones(), 2);
+  await page
+    .getByRole("button", { name: "Expand December launch", exact: true })
+    .click();
+  assert.equal(await visibleMilestones(), 17);
+  await page.getByRole("button", { name: "Collapse all", exact: true }).click();
+  assert.equal(await visibleMilestones(), 0);
+  await page.reload();
+  await page.getByRole("heading", { name: "Roadmap", exact: true }).waitFor();
+  assert.equal(await visibleMilestones(), 0);
+  await page.getByRole("button", { name: "Expand all", exact: true }).click();
+  assert.equal(await visibleMilestones(), 17);
+  await page.reload();
+  await page.getByRole("heading", { name: "Roadmap", exact: true }).waitFor();
+  assert.equal(await visibleMilestones(), 17);
+
   await page
     .getByRole("button", { name: "December launch", exact: true })
     .first()
     .click();
+  assert.equal(
+    await page
+      .getByRole("columnheader", { name: "Project", exact: true })
+      .count(),
+    0,
+  );
   await page.mouse.move(1000, 700);
   await page.mouse.wheel(0, 10000);
   await page.waitForTimeout(200);
@@ -57,6 +90,12 @@ try {
     .filter({ hasText: /proposal submitted for review/i })
     .waitFor();
   await page.getByRole("button", { name: "Milestones", exact: true }).click();
+  assert.equal(
+    await page
+      .getByRole("columnheader", { name: "Project", exact: true })
+      .count(),
+    1,
+  );
   await page
     .getByRole("button", { name: "Handover checklist agreed", exact: true })
     .click();
@@ -72,8 +111,51 @@ try {
     .getByRole("button", { name: "Edit milestone", exact: true })
     .click();
   await page.getByLabel("Done — no acceptance step").uncheck();
+  await page.getByLabel("Find dependencies").fill("Launch page");
+  await page
+    .getByRole("checkbox", { name: "Launch page published", exact: true })
+    .check();
+  await page.getByLabel("Find dependencies").fill("Pricing page");
+  await page
+    .getByRole("checkbox", { name: "Pricing page published", exact: true })
+    .check();
+  assert.equal(
+    await page.locator("#dependency-count").innerText(),
+    "2 selected",
+  );
+  assert.ok(
+    (await page.locator("#dependency-selected").innerText()).includes(
+      "Launch page published",
+    ),
+  );
+  assert.ok(
+    (await page.locator("#dependency-selected").innerText()).includes(
+      "Pricing page published",
+    ),
+  );
+
   await page.getByRole("button", { name: "Save changes", exact: true }).click();
   await page.getByRole("status").filter({ hasText: "Saved." }).waitFor();
+  const dependencyRow = page
+    .locator("tbody tr")
+    .filter({
+      has: page
+        .locator("td:first-child")
+        .getByRole("button", {
+          name: "Handover checklist agreed",
+          exact: true,
+        }),
+    });
+  assert.ok(
+    (await dependencyRow.locator(".dependency-cell").innerText()).includes(
+      "Launch page published",
+    ),
+  );
+  assert.ok(
+    (await dependencyRow.locator(".dependency-cell").innerText()).includes(
+      "Pricing page published",
+    ),
+  );
   await page.getByRole("button", { name: "+ Project", exact: true }).click();
   await page.getByLabel("Name", { exact: true }).fill("Browser test project");
   await page
@@ -102,7 +184,7 @@ try {
   });
   assert.deepEqual(errors, []);
   console.log(
-    "Browser checks passed: wheel scrolling, dark-mode dialog, timeline, proposal, complete, reopen, create, mobile, console.",
+    "Browser checks passed: collapse persistence, project-specific columns, wheel scrolling, dark-mode dialog, timeline, proposal, complete, reopen, create, mobile, console.",
   );
 } finally {
   await browser.close();
