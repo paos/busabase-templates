@@ -1,0 +1,18 @@
+{
+  "name": "Project Roadmap",
+  "description": "Projects and milestones on a clear weekly roadmap.",
+  "agentPrompts": [
+    {
+      "key": "review-plan",
+      "label": "Review this roadmap",
+      "body": "Read the `busa-project-roadmap` skill in this folder, then review the projects and milestones I name, highlighting blocked work and dates that need a decision.",
+      "intent": "read-only"
+    },
+    {
+      "key": "add-project",
+      "label": "Add a project to the roadmap",
+      "body": "Read the `busa-project-roadmap` skill in this folder, then add the project I describe and its milestones, using plain descriptions of what must be delivered.",
+      "intent": "change"
+    }
+  ]
+}

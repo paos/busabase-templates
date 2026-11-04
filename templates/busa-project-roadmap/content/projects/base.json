@@ -1,0 +1,146 @@
+{
+  "name": "Projects",
+  "description": "The overall efforts on the roadmap.",
+  "position": 0,
+  "agentPrompts": [
+    {
+      "key": "plan-project",
+      "label": "Plan a project and its milestones",
+      "body": "Read the `busa-project-roadmap` skill in this folder, then turn the project I describe into a clear purpose, responsible person, planning lane and dated milestones. Check for an existing project first.",
+      "intent": "change"
+    },
+    {
+      "key": "roadmap-check",
+      "label": "What could delay our roadmap?",
+      "body": "Read the `busa-project-roadmap` skill in this folder, then summarise the projects I name, their unfinished milestones and dependency conflicts. State which records were checked.",
+      "intent": "read-only"
+    }
+  ],
+  "fields": [
+    {
+      "slug": "title",
+      "name": "Name",
+      "type": "text",
+      "required": true,
+      "position": 0,
+      "options": {}
+    },
+    {
+      "slug": "brief",
+      "name": "Purpose, risks and decisions",
+      "type": "longtext",
+      "required": false,
+      "position": 1,
+      "options": {}
+    },
+    {
+      "slug": "owner",
+      "name": "Responsible person",
+      "type": "text",
+      "required": false,
+      "position": 2,
+      "options": {}
+    },
+    {
+      "slug": "lane",
+      "name": "Planning lane",
+      "type": "select",
+      "required": false,
+      "position": 3,
+      "options": {
+        "choices": [
+          {
+            "id": "now",
+            "name": "Now",
+            "color": "slate"
+          },
+          {
+            "id": "next",
+            "name": "Next",
+            "color": "slate"
+          },
+          {
+            "id": "later",
+            "name": "Later",
+            "color": "slate"
+          }
+        ]
+      }
+    },
+    {
+      "slug": "status",
+      "name": "Status",
+      "type": "select",
+      "required": false,
+      "position": 4,
+      "options": {
+        "choices": [
+          {
+            "id": "planned",
+            "name": "Planned",
+            "color": "slate"
+          },
+          {
+            "id": "active",
+            "name": "In progress",
+            "color": "slate"
+          },
+          {
+            "id": "paused",
+            "name": "Paused",
+            "color": "slate"
+          },
+          {
+            "id": "done",
+            "name": "Done",
+            "color": "slate"
+          }
+        ]
+      }
+    },
+    {
+      "slug": "start-date",
+      "name": "Start date",
+      "type": "date",
+      "required": false,
+      "position": 5,
+      "options": {}
+    },
+    {
+      "slug": "end-date",
+      "name": "Finish date",
+      "type": "date",
+      "required": false,
+      "position": 6,
+      "options": {}
+    },
+    {
+      "slug": "depends-on",
+      "name": "Depends on",
+      "type": "relation",
+      "required": false,
+      "position": 7,
+      "options": {
+        "targetBaseSlug": "projects",
+        "multiple": true
+      }
+    }
+  ],
+  "views": [
+    {
+      "slug": "projects",
+      "name": "Projects",
+      "type": "table",
+      "config": {
+        "visibleFieldSlugs": [
+          "title",
+          "brief",
+          "owner",
+          "lane",
+          "status",
+          "start-date"
+        ]
+      }
+    }
+  ]
+}

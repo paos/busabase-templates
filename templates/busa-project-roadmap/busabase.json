@@ -1,0 +1,32 @@
+{
+  "format": "busabase-package@1",
+  "name": "busa-project-roadmap",
+  "displayName": "Project Roadmap",
+  "description": "Plan projects and milestones across weeks and quarters, spot dependencies and keep completion simple.",
+  "version": "0.1.0",
+  "license": "MIT",
+  "tags": [
+    "project-management",
+    "roadmap",
+    "milestones",
+    "risk:gated-write"
+  ],
+  "template": {
+    "category": "platform",
+    "schemaVersion": 1,
+    "airapp": "busa-project-roadmap-app",
+    "screenshots": [
+      "assets/screenshots/cover.webp",
+      "assets/screenshots/roadmap.webp",
+      "assets/screenshots/project-detail.webp",
+      "assets/screenshots/date-proposal.webp"
+    ],
+    "agentPrompts": [
+      "Plan a project with clear milestones, owners and dates.",
+      "Check which milestone dependencies could delay our roadmap."
+    ],
+    "requires": {
+      "airapp": true
+    }
+  }
+}
