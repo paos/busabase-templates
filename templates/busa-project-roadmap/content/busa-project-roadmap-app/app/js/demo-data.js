@@ -99,6 +99,150 @@ export const sampleRecords = {
         "owner": "Operations team",
         "done": false
       }
+    },
+    {
+      "key": "pricing-ready",
+      "fields": {
+        "title": "Pricing page published",
+        "project": "december-launch",
+        "description": "The agreed prices and billing terms are published.",
+        "owner": "Commercial team",
+        "start-date": "2026-12-01",
+        "end-date": "2026-12-02",
+        "done": false
+      }
+    },
+    {
+      "key": "support-guide",
+      "fields": {
+        "title": "Support guide ready",
+        "project": "december-launch",
+        "description": "Support can answer the launch questions using a shared guide.",
+        "owner": "Support team",
+        "start-date": "2026-12-01",
+        "end-date": "2026-12-03",
+        "done": false
+      }
+    },
+    {
+      "key": "signup-check",
+      "fields": {
+        "title": "Signup flow verified",
+        "project": "december-launch",
+        "description": "A new customer can register and reach the product.",
+        "owner": "Product team",
+        "start-date": "2026-12-02",
+        "end-date": "2026-12-04",
+        "done": false
+      }
+    },
+    {
+      "key": "launch-emails",
+      "fields": {
+        "title": "Launch emails prepared",
+        "project": "december-launch",
+        "description": "Launch emails have final copy and working links.",
+        "owner": "Marketing team",
+        "start-date": "2026-12-03",
+        "end-date": "2026-12-07",
+        "done": false
+      }
+    },
+    {
+      "key": "billing-check",
+      "fields": {
+        "title": "Billing flow verified",
+        "project": "december-launch",
+        "description": "A test purchase creates the correct invoice and subscription.",
+        "owner": "Finance team",
+        "start-date": "2026-12-04",
+        "end-date": "2026-12-08",
+        "done": false
+      }
+    },
+    {
+      "key": "analytics-ready",
+      "fields": {
+        "title": "Launch reporting ready",
+        "project": "december-launch",
+        "description": "The team can see signups, purchases and support requests.",
+        "owner": "Operations team",
+        "start-date": "2026-12-07",
+        "end-date": "2026-12-09",
+        "done": false
+      }
+    },
+    {
+      "key": "training-ready",
+      "fields": {
+        "title": "Team training completed",
+        "project": "december-launch",
+        "description": "Customer-facing staff can demonstrate the launch workflow.",
+        "owner": "Support team",
+        "start-date": "2026-12-08",
+        "end-date": "2026-12-10",
+        "done": false
+      }
+    },
+    {
+      "key": "help-published",
+      "fields": {
+        "title": "Help articles published",
+        "project": "december-launch",
+        "description": "The essential setup and troubleshooting articles are available.",
+        "owner": "Support team",
+        "start-date": "2026-12-09",
+        "end-date": "2026-12-11",
+        "done": false
+      }
+    },
+    {
+      "key": "rollback-ready",
+      "fields": {
+        "title": "Rollback plan rehearsed",
+        "project": "december-launch",
+        "description": "The release team has rehearsed recovery and knows the decision owner.",
+        "owner": "Operations team",
+        "start-date": "2026-12-10",
+        "end-date": "2026-12-14",
+        "done": false
+      }
+    },
+    {
+      "key": "release-check",
+      "fields": {
+        "title": "Release checklist completed",
+        "project": "december-launch",
+        "description": "The release checklist has evidence for every required item.",
+        "owner": "Product team",
+        "start-date": "2026-12-11",
+        "end-date": "2026-12-15",
+        "done": false
+      }
+    },
+    {
+      "key": "launch-signoff",
+      "fields": {
+        "title": "Launch readiness confirmed",
+        "project": "december-launch",
+        "description": "The team has checked all agreed readiness criteria.",
+        "owner": "Launch team",
+        "start-date": "2026-12-14",
+        "end-date": "2026-12-16",
+        "done": false
+      }
+    },
+    {
+      "key": "launch-results",
+      "fields": {
+        "title": "Launch results reviewed",
+        "project": "december-launch",
+        "description": "The team has reviewed the first results and recorded follow-up work.",
+        "owner": "Launch team",
+        "start-date": "2026-12-17",
+        "end-date": "2026-12-18",
+        "done": false
+      }
     }
   ]
 };

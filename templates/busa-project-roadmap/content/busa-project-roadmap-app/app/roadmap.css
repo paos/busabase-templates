@@ -1,3 +1,9 @@
+html {
+  overflow-y: auto;
+}
+body {
+  overflow: visible;
+}
 * {
   box-sizing: border-box;
 }
@@ -288,6 +294,8 @@ main {
   color: #6c7b70;
 }
 dialog {
+  background: #ffffff;
+  overflow-y: auto;
   border: 1px solid #d1d9cf;
   border-radius: 12px;
   width: min(620px, calc(100% - 30px));
@@ -296,7 +304,7 @@ dialog {
   color: #20372f;
 }
 dialog::backdrop {
-  background: #13291d66;
+  background: #13291d38;
 }
 dialog header {
   padding: 0 0 15px;

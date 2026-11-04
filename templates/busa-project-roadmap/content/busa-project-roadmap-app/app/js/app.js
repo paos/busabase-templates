@@ -29,6 +29,10 @@ const state = {
   busy: false,
 };
 const title = (r) => r.fields.title || "Untitled";
+const chronological = (a, b) =>
+  (a.fields["start-date"] || "9999-12-31").localeCompare(
+    b.fields["start-date"] || "9999-12-31",
+  ) || title(a).localeCompare(title(b));
 const projectOf = (r) =>
   state.projects.find((p) => refs(r.fields.project).includes(p.id));
 const issues = () => [
@@ -43,12 +47,12 @@ async function load() {
     ["projects", "milestones"].map((key) => provider.page(key)),
   );
   ["projects", "milestones"].forEach((key, i) => {
-    state[key] = pages[i].records;
+    state[key] = pages[i].records.toSorted(chronological);
     state.cursors[key] = pages[i].nextCursor;
   });
 }
 function shell(content) {
-  root.innerHTML = `<header><div class="top"><div class="brand"><span class="mark" aria-hidden="true">↗</span><div><h1>Project Roadmap</h1><small>${e(provider.name)}</small></div></div><div class="actions"><span class="muted">A clear path from plans to done</span><button data-action="refresh" ${state.busy ? "disabled" : ""}>Refresh</button></div></div><nav aria-label="Sections">${["roadmap", "projects", "milestones", "help"].map((screen) => `<button data-screen="${screen}" class="${state.screen === screen ? "active" : ""}" ${state.screen === screen ? 'aria-current="page"' : ""}>${screen[0].toUpperCase() + screen.slice(1)}</button>`).join("")}</nav></header><main>${content}<p class="budget">${state.projects.length} projects · ${state.milestones.length} milestones loaded. Filters and dependency checks apply to loaded records.</p>${Object.entries(
+  root.innerHTML = `<header><div class="top"><div class="brand"><span class="mark" aria-hidden="true">↗</span><div><h1>Project Roadmap</h1><small>${e(provider.name)}</small></div></div><div class="actions"><span class="muted">A clear path from plans to done</span><button data-action="refresh" ${state.busy ? "disabled" : ""}>Refresh</button></div></div><nav aria-label="Sections">${["roadmap", "projects", "milestones", "help"].map((screen) => `<button data-screen="${screen}" class="${state.screen === screen ? "active" : ""}" ${state.screen === screen ? 'aria-current="page"' : ""}>${screen[0].toUpperCase() + screen.slice(1)}</button>`).join("")}</nav></header><main>${content}<p class="budget">${state.projects.length} projects · ${state.milestones.length} milestones loaded.</p>${Object.entries(
     state.cursors,
   )
     .filter(([, cursor]) => cursor)
@@ -92,10 +96,7 @@ function roadmap() {
     );
   const conflicts = issues().filter((i) => i.kind === "conflict");
   return (
-    intro(
-      "See what’s coming",
-      "Projects and milestones, across weeks and quarters.",
-    ) +
+    intro("Roadmap", "Projects and milestones, across weeks and quarters.") +
     `<div class="toolbar"><div class="actions"><label for="lane" class="sr-only">Roadmap horizon</label><select id="lane"><option value="all">Now, Next & Later</option>${["now", "next", "later"].map((l) => `<option ${state.lane === l ? "selected" : ""} value="${l}">${l[0].toUpperCase() + l.slice(1)}</option>`).join("")}</select></div><div class="actions"><button data-shift="-84" aria-label="Previous twelve weeks">←</button><button data-action="today">Today</button><button data-shift="84" aria-label="Next twelve weeks">→</button><small>${e(first)} — ${addDays(first, 83)}</small></div></div>${conflicts.length ? `<div class="warning"><b>${conflicts.length} dependency conflict${conflicts.length === 1 ? "" : "s"} need attention.</b> Review the impact before moving dates. <button class="text-button" data-action="conflicts">View conflicts →</button></div>` : ""}<div class="timeline"><div class="timeline-inner"><div class="timeline-row"><div class="row-label"><b>Projects & milestones</b></div><div class="week-grid">${columns.map((w) => `<span><b>${e(w.quarter)}</b>${e(w.label)}<br>${new Intl.DateTimeFormat("en", { month: "short", day: "numeric", timeZone: "UTC" }).format(date(w.day))}</span>`).join("")}</div></div>${
       visible
         .map(
@@ -139,7 +140,16 @@ function projectDetail() {
   return `<button class="text-button" data-action="back">← All projects</button><div class="intro"><div><h2>${e(title(p))}</h2><span class="lane">${e(p.fields.lane || "later")}</span></div><div class="actions"><button data-edit="${e(p.id)}" data-kind="projects">Edit project</button><button data-schedule="${e(p.id)}" data-kind="projects">Propose dates</button><button class="primary" data-new="milestones">+ Milestone</button></div></div><div class="project-detail"><div class="card"><h3>Purpose, risks and decisions</h3><p class="definition">${e(p.fields.brief || "Add the purpose of this project and any important risks or decisions.")}</p></div><div class="card"><p class="detail-label">Responsible person</p><p>${e(p.fields.owner || "Unassigned")}</p><p class="detail-label">Planned dates</p><p>${e(p.fields["start-date"] || "Not set")} → ${e(p.fields["end-date"] || "Not set")}</p><p class="detail-label">Status</p><p>${e(p.fields.status || "planned")}</p></div></div><div class="card"><h3>Milestones</h3>${milestoneTable(state.milestones.filter((m) => refs(m.fields.project).includes(p.id)))}</div>`;
 }
 function help() {
-  return `<div class="card help"><h2>A small model for clear plans</h2><h3>Projects</h3><p>An overall effort, such as a launch. The brief explains its purpose, important risks and decisions. Use Now, Next or Later to show priority; dates show the planned calendar window.</p><h3>Milestones</h3><p>A concrete outcome within a project. “What done means” describes the finished result. The owner is responsible for progress; anyone with edit access can mark it Done. There is no acceptance step. If work needs revisiting, reopen it by clearing Done in Edit milestone.</p><h3>Dependencies and date proposals</h3><p>A dependency must finish before the dependent work starts. Amber bars flag conflicts among loaded records. Proposed dates preserve the task’s duration and await review in Busa; they do not move the live schedule immediately.</p><h3>Access and loading</h3><p>The app uses your existing Busa permissions. A normal edit is saved or submitted for review according to your access. Each load reads at most 50 records per table. Load more to include additional records in filters and dependency checks.</p></div>`;
+  return `<div class="card help"><h2>Using Project Roadmap</h2>
+  <h3>Projects</h3><p>A project is an overall effort, such as a launch. Its brief explains the purpose, important risks and decisions. Milestones describe the concrete outcomes within it.</p>
+  <h3>Now — current work</h3><p>Use Now for projects the team is actively working on in the current planning cycle. Keep this group small enough that the people assigned can make progress. <b>Example:</b> December launch is Now while the team is preparing the launch.</p>
+  <h3>Next — the next agreed priorities</h3><p>Use Next for projects you intend to start when the team has capacity and the prerequisites are ready. The work is a priority, but it is not the team's current focus. <b>Example:</b> Customer portal is Next while launch preparation takes priority. Projects can overlap when there is enough capacity.</p>
+  <h3>Later — future work without a current commitment</h3><p>Use Later for work worth keeping on the roadmap that the team has not committed to starting soon. Dates can stay empty until the plan is clearer. <b>Example:</b> Operations refresh is Later while its priority and timing are still being decided.</p>
+  <h3>When to move a project</h3><p>Move Next to Now when the team is ready to begin. When current work finishes, mark the project Done and choose the next ready project. Move work to Later if it loses priority. Review these choices together when you review the roadmap.</p>
+  <p><b>Priority and dates are separate.</b> Now / Next / Later describes focus and planning confidence; start and finish dates place the work in specific weeks and quarters. The labels have no fixed number of weeks. Changing a label does not change dates or move a timeline bar.</p>
+  <h3>Milestones</h3><p>A milestone is a concrete outcome within a project. “What done means” describes the finished result. The owner is responsible for progress; anyone with edit access can mark it Done. There is no acceptance step. Reopen it by clearing Done in Edit milestone if work needs revisiting.</p>
+  <h3>Dependencies and date proposals</h3><p>A dependency must finish before the dependent work starts. Amber bars flag conflicts among loaded records. Suggested dates preserve the work's duration. Submit a date proposal for review in Busa; the current schedule stays in place until approved.</p>
+  <h3>Access and loading</h3><p>The app uses your existing Busa permissions. A normal edit is saved or submitted for review according to your access. Each load reads at most 50 records per table. Use Load more to include additional records.</p></div>`;
 }
 function showDialog(html) {
   dialog.innerHTML = html;

@@ -37,6 +37,11 @@ editor. Horizon (`now`, `next`, `later`) expresses priority; start and finish da
 place the plan on the calendar. Status is `planned`, `active`, `paused` or `done`.
 Projects may depend on other projects.
 
+Use **Now** for current active work, **Next** for agreed next priorities awaiting
+capacity or prerequisites, and **Later** for worthwhile future work without a near-term
+commitment. Move Next to Now when the team is ready to begin. These horizons do not
+represent fixed weeks or quarters; changing a horizon never changes planned dates.
+
 **Milestones** are concrete outcomes within a project. A milestone must have a name
 and project. `description` explains what done means, with enough detail to identify
 the finished result. `owner` names the responsible person or team. Start and finish
@@ -72,7 +77,7 @@ The AirApp offers Roadmap, Projects, Milestones and Help. Its twelve-week timeli
 shows ISO week years and quarters. Undated work stays visibly unscheduled. Read
 errors are shown; live mode never falls back to demo data.
 
-Installation includes three fictional projects and five milestones. One dependency
+Installation includes three fictional projects and seventeen milestones. One dependency
 conflict illustrates the review flow. Replace samples only when explicitly asked;
 do not delete somebody else's records while adding a real plan.
 

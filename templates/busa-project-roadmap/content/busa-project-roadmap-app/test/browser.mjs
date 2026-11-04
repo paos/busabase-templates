@@ -15,8 +15,40 @@ try {
     }),
     errors = [];
   page.on("pageerror", (error) => errors.push(error.message));
+  await page.emulateMedia({ colorScheme: "dark" });
   await page.goto(url.href);
-  await page.getByRole("heading", { name: "See what’s coming" }).waitFor();
+  await page.getByRole("heading", { name: "Roadmap", exact: true }).waitFor();
+  await page
+    .getByRole("button", { name: "December launch", exact: true })
+    .first()
+    .click();
+  await page.mouse.move(1000, 700);
+  await page.mouse.wheel(0, 10000);
+  await page.waitForTimeout(200);
+  assert.ok(
+    await page.evaluate(() => scrollY > 0),
+    "Mouse wheel must scroll the project page",
+  );
+  assert.ok(
+    await page
+      .getByRole("button", { name: "Launch results reviewed", exact: true })
+      .evaluate((el) => {
+        const rect = el.getBoundingClientRect();
+        return rect.top >= 0 && rect.bottom <= innerHeight;
+      }),
+    "The last December milestone must be reachable",
+  );
+  await page.getByRole("button", { name: "Edit project", exact: true }).click();
+  const contrast = await page.locator("dialog[open]").evaluate((el) => ({
+    background: getComputedStyle(el).backgroundColor,
+    color: getComputedStyle(el).color,
+  }));
+  assert.deepEqual(contrast, {
+    background: "rgb(255, 255, 255)",
+    color: "rgb(32, 55, 47)",
+  });
+  await page.getByRole("button", { name: "Cancel", exact: true }).click();
+  await page.getByRole("button", { name: "Roadmap", exact: true }).click();
   await page.getByRole("button", { name: "View conflicts →" }).click();
   await page.getByRole("button", { name: "Review proposed dates →" }).click();
   await page.getByRole("button", { name: "Submit proposal" }).click();
@@ -70,7 +102,7 @@ try {
   });
   assert.deepEqual(errors, []);
   console.log(
-    "Browser checks passed: timeline, proposal, complete, reopen, create, mobile, console.",
+    "Browser checks passed: wheel scrolling, dark-mode dialog, timeline, proposal, complete, reopen, create, mobile, console.",
   );
 } finally {
   await browser.close();
