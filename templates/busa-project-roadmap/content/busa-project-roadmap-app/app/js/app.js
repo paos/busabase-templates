@@ -129,11 +129,11 @@ function roadmap() {
       visible
         .map(
           (p) =>
-            `<div class="timeline-row project-row"><div class="row-label"><button class="project-toggle" data-toggle-project="${e(p.id)}" aria-expanded="${!collapsedProjects.has(p.id)}" aria-controls="project-milestones-${e(p.id)}" aria-label="${collapsedProjects.has(p.id) ? "Expand" : "Collapse"} ${e(title(p))}">${collapsedProjects.has(p.id) ? "▸" : "▾"}</button><button class="text-button" data-open="${e(p.id)}" data-kind="projects">${e(title(p))}</button><span class="lane">${e(p.fields.lane || "later")}</span></div><div class="track">${bar(p, "projects", first)}</div></div><div id="project-milestones-${e(p.id)}" ${collapsedProjects.has(p.id) ? "hidden" : ""}>${state.milestones
+            `<div class="timeline-row project-row"><div class="row-label"><button class="project-toggle" data-toggle-project="${e(p.id)}" aria-expanded="${!collapsedProjects.has(p.id)}" aria-controls="project-milestones-${e(p.id)}" aria-label="${collapsedProjects.has(p.id) ? "Expand" : "Collapse"} ${e(title(p))}">${collapsedProjects.has(p.id) ? "▸" : "▾"}</button><button class="text-button" data-open="${e(p.id)}" data-kind="projects" title="${e(title(p))}">${e(title(p))}</button><span class="lane">${e(p.fields.lane || "later")}</span></div><div class="track">${bar(p, "projects", first)}</div></div><div id="project-milestones-${e(p.id)}" ${collapsedProjects.has(p.id) ? "hidden" : ""}>${state.milestones
               .filter((m) => refs(m.fields.project).includes(p.id))
               .map(
                 (m) =>
-                  `<div class="timeline-row"><div class="row-label child"><span class="dot">${m.fields.done ? "✓" : "◇"}</span><button class="text-button" data-open="${e(m.id)}" data-kind="milestones">${e(title(m))}</button></div><div class="track">${bar(m, "milestones", first)}</div></div>`,
+                  `<div class="timeline-row"><div class="row-label child"><span class="dot">${m.fields.done ? "✓" : "◇"}</span><button class="text-button" data-open="${e(m.id)}" data-kind="milestones" title="${e(title(m))}">${e(title(m))}</button></div><div class="track">${bar(m, "milestones", first)}</div></div>`,
               )
               .join("")}</div>`,
         )
