@@ -1,3 +1,4 @@
+import { createRoadmapResizer } from "./roadmap-resize.js";
 import { airAppWriteMessage } from "../vendor/busabase-airapp.js";
 import { getRuntime, shouldUseLocalGateway } from "./runtime.js";
 import { createAirAppConnectGate } from "../vendor/busabase-airapp-gate.js";
@@ -35,6 +36,7 @@ function rememberCollapsed() {
     notify("Your browser could not save the roadmap display preference.");
   }
 }
+const syncRoadmapWidth = createRoadmapResizer(root, `project-roadmap:column-width:v1:${location.pathname}:${demo ? "demo" : "live"}`);
 const state = {
   projects: [],
   milestones: [],
@@ -85,6 +87,7 @@ function render() {
     shell(state.project ? projectDetail() : projects());
   else if (state.screen === "milestones") shell(milestones());
   else shell(help());
+  syncRoadmapWidth();
 }
 function bar(row, kind, first) {
   const f = row.fields,
@@ -122,7 +125,7 @@ function roadmap() {
   const conflicts = attention.filter((i) => i.kind === "conflict");
   return (
     `<div class="roadmap-heading"><h2>Roadmap</h2><div class="actions"><button data-new="milestones">+ Milestone</button><button class="primary" data-new="projects">+ Project</button></div></div>` +
-    `<div class="toolbar"><div class="actions"><label for="lane" class="sr-only">Roadmap horizon</label><select id="lane"><option value="all">Now, Next & Later</option>${["now", "next", "later"].map((l) => `<option ${state.lane === l ? "selected" : ""} value="${l}">${l[0].toUpperCase() + l.slice(1)}</option>`).join("")}</select><button data-action="expand-all">Expand all</button><button data-action="collapse-all">Collapse all</button></div><div class="actions"><button data-shift="-84" aria-label="Previous twelve weeks">←</button><button data-action="today">Today</button><button data-shift="84" aria-label="Next twelve weeks">→</button><small>${e(first)} — ${addDays(first, 83)}</small></div></div>${attention.length ? `<div class="warning"><b>${conflicts.length ? `${conflicts.length} dependency conflict${conflicts.length === 1 ? "" : "s"}.` : "Dependencies need attention."}</b> <button class="text-button" data-action="conflicts">${attention.length === conflicts.length ? "View conflicts" : "Review dependencies"} →</button></div>` : ""}<div class="timeline"><div class="timeline-inner"><div class="timeline-row"><div class="row-label"><b>Projects & milestones</b></div><div class="calendar-header"><div class="quarter-grid">${quarters.map((q) => `<span style="grid-column:span ${q.days}">${e(q.label)}</span>`).join("")}</div><div class="week-grid">${columns.map((w) => `<span><b>${e(w.label.split(" · ")[0])}</b> ${new Intl.DateTimeFormat("en", { month: "short", day: "numeric", timeZone: "UTC" }).format(date(w.day))}</span>`).join("")}</div></div></div>${
+    `<div class="toolbar"><div class="actions"><label for="lane" class="sr-only">Roadmap horizon</label><select id="lane"><option value="all">Now, Next & Later</option>${["now", "next", "later"].map((l) => `<option ${state.lane === l ? "selected" : ""} value="${l}">${l[0].toUpperCase() + l.slice(1)}</option>`).join("")}</select><button data-action="expand-all">Expand all</button><button data-action="collapse-all">Collapse all</button></div><div class="actions"><button data-shift="-84" aria-label="Previous twelve weeks">←</button><button data-action="today">Today</button><button data-shift="84" aria-label="Next twelve weeks">→</button><small>${e(first)} — ${addDays(first, 83)}</small></div></div>${attention.length ? `<div class="warning"><b>${conflicts.length ? `${conflicts.length} dependency conflict${conflicts.length === 1 ? "" : "s"}.` : "Dependencies need attention."}</b> <button class="text-button" data-action="conflicts">${attention.length === conflicts.length ? "View conflicts" : "Review dependencies"} →</button></div>` : ""}<div class="timeline"><div class="timeline-inner" id="roadmap-grid"><div class="roadmap-divider" role="separator" tabindex="0" aria-label="Resize project and milestone column" aria-orientation="vertical" aria-controls="roadmap-grid" aria-valuemin="180" title="Drag to resize. Arrow keys adjust width; double-click or Enter resets it."></div><div class="timeline-row"><div class="row-label"><b>Projects & milestones</b></div><div class="calendar-header"><div class="quarter-grid">${quarters.map((q) => `<span style="grid-column:span ${q.days}">${e(q.label)}</span>`).join("")}</div><div class="week-grid">${columns.map((w) => `<span><b>${e(w.label.split(" · ")[0])}</b> ${new Intl.DateTimeFormat("en", { month: "short", day: "numeric", timeZone: "UTC" }).format(date(w.day))}</span>`).join("")}</div></div></div>${
       visible
         .map(
           (p) =>

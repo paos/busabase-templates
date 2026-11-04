@@ -2945,14 +2945,14 @@
         "Plan a project with clear milestones, owners and dates.",
         "Check which milestone dependencies could delay our roadmap."
       ],
-      "version": "0.1.0",
+      "version": "0.1.1",
       "license": "MIT",
       "stats": {
         "folders": 0,
         "docs": 0,
         "bases": 2,
         "records": 20,
-        "files": 22,
+        "files": 23,
         "airapps": 1,
         "skill": true
       }
