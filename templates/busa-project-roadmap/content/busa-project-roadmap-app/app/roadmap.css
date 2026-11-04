@@ -185,17 +185,32 @@ main {
   border: 0;
 }
 .row-label {
-  padding: 12px 18px;
+  padding: 8px 18px;
   border-right: 1px solid #e2e7e0;
   display: flex;
   align-items: center;
   gap: 9px;
   min-width: 0;
 }
-.row-label button {
+.row-label .text-button {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-box-pack: center;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  padding: 0;
+  min-height: 36px;
+  min-width: 0;
+  flex: 1;
+  line-height: 18px;
+  text-align: left;
+}
+.row-label .lane,
+.row-label .dot {
+  flex-shrink: 0;
 }
 .row-label.child {
   padding-left: 33px;

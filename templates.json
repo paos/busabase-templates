@@ -2945,7 +2945,7 @@
         "Plan a project with clear milestones, owners and dates.",
         "Check which milestone dependencies could delay our roadmap."
       ],
-      "version": "0.1.1",
+      "version": "0.1.2",
       "license": "MIT",
       "stats": {
         "folders": 0,
