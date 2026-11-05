@@ -90,7 +90,7 @@ workflow data belongs to the two native Bases.
 Drag the middle of a milestone bar to move its dates, or drag an end to resize
 the interval. Changes snap to calendar days. Release opens the schedule editor;
 nothing is written until Submit proposal. Escape or Cancel discards the preview.
-Click a milestone name to open its details, then choose **Dates & dependencies**. Clicking a bar opens the schedule editor directly. Arrow keys move a focused
+Clicking any milestone name or bar opens **Overview**. The same popup keeps the milestone name and project visible across **Overview**, **Edit details**, and **Dates & dependencies**. Cancel returns to Overview; Close exits the popup. Unsaved changes require an explicit discard before navigation. Save or Submit proposal returns to Overview with the result. Arrow keys move a focused
 bar or edge by one day; Shift changes the step to a week.
 
 The schedule editor shows start, finish, duration and selected dependency names.

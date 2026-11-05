@@ -1,0 +1,74 @@
+import assert from "node:assert/strict";
+import { mkdir } from "node:fs/promises";
+import { chromium } from "playwright";
+const browser = await chromium.launch({headless:true,executablePath:process.env.BROWSER_EXECUTABLE});
+try {
+  const page = await browser.newPage({viewport:{width:1440,height:900}});
+  await page.clock.setFixedTime(new Date("2026-11-05T12:00:00Z"));
+  const errors=[];
+  page.on("pageerror",error=>errors.push(error.message));
+  await page.goto((process.env.ROADMAP_PREVIEW_URL || "http://127.0.0.1:3108")+"/?demo=1");
+  await mkdir("coverage/popup",{recursive:true});
+  const current = () => page.locator(".milestone-nav [aria-current]").innerText();
+  const section = name => page.getByRole("navigation",{name:"Milestone sections"}).getByRole("button",{name,exact:true}).click();
+  const close = () => page.locator("#editor .close").click();
+  const label = () => page.locator('.row-label.child [data-open="demo-ready"]').click();
+  const bar = () => page.locator('[data-drag-milestone="demo-ready"][data-edge="move"]').click();
+  for (const open of [label,bar,label,bar]) {
+    await open();
+    assert.equal(await current(),"Overview");
+    assert.equal(await page.locator("#dialog-title").innerText(),"Product demo ready");
+    assert.equal(await page.locator("#editor").evaluate(el=>el.scrollTop),0);
+    await section("Edit details");
+    assert.equal(await current(),"Edit details");
+    assert.equal(await page.getByLabel("Find dependencies").count(),0);
+    await section("Dates & dependencies");
+    assert.equal(await current(),"Dates & dependencies");
+    await page.getByRole("button",{name:"Cancel",exact:true}).click();
+    assert.equal(await current(),"Overview");
+    await close();
+  }
+  await label();
+  await page.screenshot({path:"coverage/popup/overview.png"});
+  await section("Edit details");
+  await page.getByLabel("Name",{exact:true}).fill("Draft milestone name");
+  await section("Dates & dependencies");
+  assert.equal(await current(),"Edit details");
+  await page.getByRole("button",{name:"Keep editing",exact:true}).click();
+  assert.equal(await page.getByLabel("Name",{exact:true}).inputValue(),"Draft milestone name");
+  await page.keyboard.press("Escape");
+  await page.getByRole("button",{name:"Keep editing",exact:true}).click();
+  await section("Overview");
+  await page.getByRole("button",{name:"Discard changes",exact:true}).click();
+  assert.equal(await current(),"Overview");
+  assert.equal(await page.locator("#dialog-title").innerText(),"Product demo ready");
+  await section("Edit details");
+  await page.getByLabel("Responsible person").fill("Updated owner");
+  await page.screenshot({path:"coverage/popup/edit.png"});
+  await page.getByRole("button",{name:"Save changes",exact:true}).click();
+  await page.locator(".milestone-feedback").filter({hasText:"Saved."}).waitFor();
+  assert.equal(await current(),"Overview");
+  assert.ok((await page.locator(".milestone-facts").innerText()).includes("Updated owner"));
+  await close();
+  await page.getByRole("button",{name:"Milestones",exact:true}).click();
+  await page.locator("td:first-child").getByRole("button",{name:"Product demo ready",exact:true}).click();
+  assert.equal(await current(),"Overview");
+  await page.setViewportSize({width:390,height:844});
+  await page.screenshot({path:"coverage/popup/mobile-overview.png"});
+  for (const name of ["Edit details","Dates & dependencies","Overview"]) {
+    await section(name);
+    assert.equal(await current(),name);
+    assert.equal(await page.locator("#editor").evaluate(el=>el.scrollWidth>el.clientWidth),false);
+    assert.ok(await page.locator(".milestone-nav").evaluate(el=>el.getBoundingClientRect().top>=0));
+    assert.ok(await page.locator("#editor .form-footer").evaluate(el=>el.getBoundingClientRect().bottom<=innerHeight));
+  }
+  await section("Dates & dependencies");
+  await page.screenshot({path:"coverage/popup/mobile-schedule.png"});
+  await close();
+  await page.getByRole("button",{name:"Projects",exact:true}).click();
+  await page.getByRole("button",{name:"December launch",exact:true}).click();
+  await page.locator("td:first-child").getByRole("button",{name:"Product demo ready",exact:true}).click();
+  assert.equal(await current(),"Overview");
+  assert.deepEqual(errors,[]);
+  console.log("Popup journey passed: names and bars open Overview; persistent identity, active sections, Cancel, save feedback, unsaved navigation/Escape, list/project entry and mobile footer visibility.");
+} finally {await browser.close();}
