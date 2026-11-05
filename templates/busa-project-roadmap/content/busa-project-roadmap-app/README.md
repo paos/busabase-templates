@@ -37,7 +37,7 @@ ambiguous resource ownership is an explicit setup error.
 
 Drag a milestone bar to move its full interval; drag either edge to adjust its start
 or finish. Release reviews the dates and dependencies together. Escape cancels the
-preview. Clicking a bar or dependency count opens the same editor, and arrow keys
+preview. Click a milestone name to open its details, then choose **Dates & dependencies**. Clicking a bar opens the schedule editor directly, and arrow keys
 offer a keyboard alternative (Shift changes the step to a week).
 
 Dependency chips show selected names with removal controls. Search adds prerequisites.

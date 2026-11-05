@@ -3,7 +3,7 @@
   "name": "busa-project-roadmap",
   "displayName": "Project Roadmap",
   "description": "Plan projects and milestones across weeks and quarters, spot dependencies and keep completion simple.",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "license": "MIT",
   "tags": [
     "project-management",
