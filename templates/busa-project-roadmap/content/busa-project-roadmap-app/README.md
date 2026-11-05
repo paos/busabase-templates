@@ -1,7 +1,7 @@
 # Project Roadmap
 
 Canonical AirApp source for the reusable template. Projects contain milestones; anyone
-with edit access may complete or reopen them. Date changes are explicit review proposals.
+with edit access may complete or reopen them. Schedule changes are explicit review proposals.
 
 The app uses the viewer’s Busa session and resolves only stamped resources belonging to
 this installation. Each page reads at most 50 projects and 50 milestones; Load more fetches
@@ -32,3 +32,20 @@ From the template root, run `node scripts/sync-content.mjs --check` and
 `app/js/config.js` and `app/js/demo-data.js`; regenerate content rather than editing
 Base declarations independently. The template supports one installation per Space;
 ambiguous resource ownership is an explicit setup error.
+
+## Milestone scheduling
+
+Drag a milestone bar to move its full interval; drag either edge to adjust its start
+or finish. Release reviews the dates and dependencies together. Escape cancels the
+preview. Clicking a bar or dependency count opens the same editor, and arrow keys
+offer a keyboard alternative (Shift changes the step to a week).
+
+Dependency chips show selected names with removal controls. Search adds prerequisites.
+Start after dependencies preserves duration. Circular dependencies block submission;
+downstream conflicts are shown without automatic cascading changes. All schedule
+proposals preserve canonical records until reviewed.
+
+Run `npm run test:scheduling` against the preview to exercise mouse, touch, keyboard,
+resizing, cancellation, dependency edits, cycle prevention and combined review submission.
+After updating an installed AirApp, use Busa's Stop then Run controls to ensure the
+new source is loaded, including on server versions with the Restart reattachment bug.

@@ -65,7 +65,7 @@ export function createLiveProvider(client = createRuntimeClient()) {
           // allow-forced-review: The user explicitly requires proposed schedule changes to await review.
           autoMerge: false,
           message:
-            "Proposed roadmap dates; review before changing the schedule.",
+            "Proposed roadmap dates and dependencies; review before changing the schedule.",
         }),
       );
     },

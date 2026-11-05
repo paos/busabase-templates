@@ -112,3 +112,29 @@ export const escapeHtml = (value) =>
         c
       ],
   );
+
+export function rescheduleInterval(start, end, days, edge = "move") {
+  validateDates(start, end);
+  if (!date(start) || !date(end)) throw new Error("Set a start and finish first.");
+  const delta = Math.round(days);
+  if (edge === "start") return { start: [addDays(start, delta), end].sort()[0], end };
+  if (edge === "end") return { start, end: [start, addDays(end, delta)].sort().at(-1) };
+  return { start: addDays(start, delta), end: addDays(end, delta) };
+}
+export function scheduleReview(rows, row, fields) {
+  const candidate = { ...row, fields: { ...row.fields, ...fields } };
+  const updated = rows.map((item) => item.id === row.id ? candidate : item);
+  const problems = dependencyIssues(updated).filter((issue) =>
+    issue.row.id === row.id || refs(issue.row.fields["depends-on"]).includes(row.id));
+  const dependencies = refs(candidate.fields["depends-on"]);
+  const predecessors = dependencies.map((id) => rows.find((item) => item.id === id));
+  const canAlign = dependencies.length > 0 && predecessors.every((item) =>
+    item && date(item.fields["end-date"])) &&
+    !problems.some((issue) => issue.kind === "cycle");
+  const latest = canAlign ? predecessors.map((item) => item.fields["end-date"]).sort().at(-1) : null;
+  const start = fields["start-date"], end = fields["end-date"];
+  const align = latest && date(start) && date(end) && start <= end
+    ? { start: addDays(latest, 1), end: addDays(latest, 1 + (date(end) - date(start)) / DAY) }
+    : null;
+  return { problems, align };
+}

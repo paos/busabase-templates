@@ -78,8 +78,11 @@ test("normal writes follow permissions while schedule proposals require review",
   await f.provider.propose(row, {
     "start-date": "2026-12-12",
     "end-date": "2026-12-14",
+    "depends-on": ["predecessor"],
   });
   assert.equal(f.writes[1].autoMerge, false);
+  assert.deepEqual(f.writes[1].fields["depends-on"], ["predecessor"]);
+  assert.equal(f.writes[1].baseCommitId, "test-head");
 });
 test("authentication failures never turn into sample data", async () => {
   const f = fixture();

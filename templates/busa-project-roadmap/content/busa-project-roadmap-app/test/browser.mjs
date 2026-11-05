@@ -113,11 +113,11 @@ try {
   await page.getByLabel("Done — no acceptance step").uncheck();
   await page.getByLabel("Find dependencies").fill("Launch page");
   await page
-    .getByRole("checkbox", { name: "Launch page published", exact: true })
+    .getByRole("checkbox", { name: /^Launch page published/ })
     .check();
   await page.getByLabel("Find dependencies").fill("Pricing page");
   await page
-    .getByRole("checkbox", { name: "Pricing page published", exact: true })
+    .getByRole("checkbox", { name: /^Pricing page published/ })
     .check();
   assert.equal(
     await page.locator("#dependency-count").innerText(),

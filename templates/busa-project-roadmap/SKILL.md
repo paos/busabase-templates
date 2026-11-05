@@ -84,3 +84,22 @@ do not delete somebody else's records while adding a real plan.
 The reusable package binds resources at install time. It contains no workspace IDs,
 credentials or outside integrations. No Vault setup is required. All persistent
 workflow data belongs to the two native Bases.
+
+## Interactive scheduling
+
+Drag the middle of a milestone bar to move its dates, or drag an end to resize
+the interval. Changes snap to calendar days. Release opens the schedule editor;
+nothing is written until Submit proposal. Escape or Cancel discards the preview.
+Click a bar or its dependency count for the same editor. Arrow keys move a focused
+bar or edge by one day; Shift changes the step to a week.
+
+The schedule editor shows start, finish, duration and selected dependency names.
+Search to add prerequisites or remove a named chip. Start after dependencies keeps
+the duration and proposes the day after the latest known prerequisite finish.
+Unknown prerequisites and missing dates are flagged; never infer their dates.
+Cycles block submission. Warnings identify downstream conflicts; dependent
+milestones are never moved automatically. Date and dependency changes made here
+are submitted together with explicit review, preserving the current plan.
+
+On Busa versions where Restart only reattaches to a server-side run, use Stop
+then Run after an app update to load the new source.
