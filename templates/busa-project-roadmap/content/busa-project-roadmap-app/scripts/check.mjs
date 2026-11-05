@@ -17,6 +17,7 @@ for (const file of [
   "app/js/app.js",
   "app/js/model.js",
   "app/js/roadmap-resize.js",
+  "app/js/milestone-drag.js",
   "app/js/providers/live.js",
 ])
   execFileSync(process.execPath, ["--check", file]);

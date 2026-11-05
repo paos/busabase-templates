@@ -3,7 +3,7 @@
   "name": "busa-project-roadmap",
   "displayName": "Project Roadmap",
   "description": "Plan projects and milestones across weeks and quarters, spot dependencies and keep completion simple.",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "license": "MIT",
   "tags": [
     "project-management",
@@ -19,7 +19,8 @@
       "assets/screenshots/cover.webp",
       "assets/screenshots/roadmap.webp",
       "assets/screenshots/project-detail.webp",
-      "assets/screenshots/date-proposal.webp"
+      "assets/screenshots/date-proposal.webp",
+      "assets/screenshots/milestone-drag.webp"
     ],
     "agentPrompts": [
       "Plan a project with clear milestones, owners and dates.",

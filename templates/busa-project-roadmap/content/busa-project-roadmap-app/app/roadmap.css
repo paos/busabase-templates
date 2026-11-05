@@ -728,3 +728,81 @@ main {
   cursor: col-resize !important;
   user-select: none !important;
 }
+
+/* Milestone dates share one review flow whether changed by pointer, keyboard or form. */
+.milestone-bar { padding: 0; overflow: visible; min-width: 12px; }
+.milestone-move {
+  display: block; width: 100%; height: 100%; min-width: 0; border: 0;
+  padding: 3px 12px; border-radius: inherit; background: transparent; color: inherit;
+  overflow: hidden; white-space: nowrap; text-overflow: ellipsis; text-align: left;
+  font: inherit; cursor: grab; touch-action: pan-y;
+}
+.milestone-edge {
+  position: absolute; top: -3px; bottom: -3px; width: 10px; min-height: 33px;
+  padding: 0; border: 0; border-radius: 4px; background: transparent;
+  cursor: ew-resize; touch-action: pan-y; z-index: 2;
+}
+.milestone-edge.start { left: -7px; }
+.milestone-edge.end { right: -7px; }
+.milestone-edge::after {
+  content: ""; position: absolute; width: 2px; height: 13px; top: 10px; left: 4px;
+  border-radius: 2px; background: currentColor; opacity: .5;
+}
+.milestone-bar:hover, .milestone-bar:focus-within { outline: 2px solid #80a792; outline-offset: 1px; z-index: 3; }
+.milestone-edge:hover, .milestone-edge:focus-visible { background: #2c765c; color: white; outline: 2px solid white; }
+.milestone-move:focus-visible { outline: 2px solid #176b5b; outline-offset: 2px; }
+.milestone-bar.is-dragging { box-shadow: 0 5px 16px #183f3a40; outline: 2px solid #176b5b; z-index: 4; }
+.dragging-milestone, .dragging-milestone * { user-select: none !important; }
+.dragging-milestone .milestone-move { cursor: grabbing; }
+.drag-date-preview {
+  position: fixed; z-index: 100; pointer-events: none; background: #173e34; color: white;
+  border-radius: 7px; box-shadow: 0 3px 12px #173e3430; padding: 8px 12px;
+  font-size: 12px; line-height: 1.4; max-width: calc(100vw - 16px);
+}
+.roadmap-dependencies {
+  flex: 0 0 auto; border: 0; border-radius: 5px; background: #edf3ee;
+  color: #476653; font-size: 11px; font-variant-numeric: tabular-nums; padding: 4px 5px;
+}
+.roadmap-dependencies:hover, .roadmap-dependencies:focus-visible { background: #dce9df; color: #174f37; }
+.unscheduled { background: none; border: 0; color: #32634d; text-align: left; }
+.dependency-chip { display: inline-flex; align-items: center; gap: 6px; max-width: 100%; }
+.dependency-chip > span { overflow-wrap: anywhere; }
+.dependency-chip button {
+  flex-shrink: 0; border: 0; background: transparent; color: #36513d;
+  padding: 0 4px; min-width: 24px; min-height: 24px; font-size: 18px; line-height: 1;
+}
+.dependency-chip button:hover { background: #cbdcd0; }
+.dependency-choice b { display: block; font-size: 13px; font-weight: 500; }
+.dependency-choice small { display: block; color: #66766b; margin-top: 2px; font-size: 11px; }
+.dependency-choice { border-radius: 5px; padding: 8px 6px; }
+.dependency-choice:has(input:checked) { background: #edf4ee; }
+.schedule-title { margin: 4px 0 16px; color: #365144; font-weight: 600; overflow-wrap: anywhere; }
+.schedule-dates { padding: 14px; background: #f3f7f2; border: 1px solid #e1e9df; border-radius: 8px; }
+.schedule-dates label { margin: 0; }
+.schedule-date-summary { margin-top: 9px; font-size: 12px; color: #596d60; }
+.schedule-checks { margin-top: 12px; }
+.align-dependencies { font-size: 12px; color: #205b44; background: #eaf2eb; border-color: #ccddcf; }
+.schedule-warning { padding: 10px 12px; margin: 8px 0; background: #fff5dc; color: #6b501c; border-radius: 6px; font-size: 12px; line-height: 1.5; }
+.review-note { font-size: 12px; color: #68796c; line-height: 1.5; margin: 16px 0 0; }
+#schedule-form .dependencies { margin-top: 14px; }
+#schedule-form .dependency-options { max-height: 150px; }
+@media (max-width: 700px) {
+  .roadmap-dependencies { padding: 4px; }
+  .schedule-dates { padding: 10px; }
+  .schedule-dates .form-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 8px; }
+  .schedule-dates input { min-width: 0; width: 100%; font-size: 14px; }
+  #schedule-form .dependency-options { max-height: 130px; }
+}
+
+dialog.schedule-dialog[open] { display: flex; flex-direction: column; overflow: hidden; }
+.schedule-dialog header, .schedule-dialog .schedule-title { flex-shrink: 0; }
+#schedule-form { display: flex; flex-direction: column; min-height: 0; }
+.schedule-fields { overflow-y: auto; min-height: 0; padding-right: 4px; }
+#schedule-form .form-footer { flex-shrink: 0; border-top: 1px solid #e1e7df; padding-top: 14px; margin-top: 14px; }
+.schedule-dates label { min-width: 0; }
+@media (max-width: 700px) {
+  dialog.schedule-dialog { padding: 18px; max-height: 94dvh; }
+  .schedule-dialog header { margin-bottom: 12px; padding-bottom: 10px; }
+  .schedule-dialog .schedule-title { margin-bottom: 12px; }
+  .schedule-dates input { padding: 8px 5px; }
+}

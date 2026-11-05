@@ -2939,20 +2939,21 @@
         "assets/screenshots/cover.webp",
         "assets/screenshots/roadmap.webp",
         "assets/screenshots/project-detail.webp",
-        "assets/screenshots/date-proposal.webp"
+        "assets/screenshots/date-proposal.webp",
+        "assets/screenshots/milestone-drag.webp"
       ],
       "agentPrompts": [
         "Plan a project with clear milestones, owners and dates.",
         "Check which milestone dependencies could delay our roadmap."
       ],
-      "version": "0.1.2",
+      "version": "0.1.3",
       "license": "MIT",
       "stats": {
         "folders": 0,
         "docs": 0,
         "bases": 2,
         "records": 20,
-        "files": 23,
+        "files": 24,
         "airapps": 1,
         "skill": true
       }
