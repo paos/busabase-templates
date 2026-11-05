@@ -89,6 +89,7 @@ try {
     .getByRole("status")
     .filter({ hasText: /proposal submitted for review/i })
     .waitFor();
+  await page.locator("#editor .close").click();
   await page.getByRole("button", { name: "Milestones", exact: true }).click();
   assert.equal(
     await page
@@ -105,12 +106,12 @@ try {
     .click();
   await page.getByRole("status").filter({ hasText: "Saved." }).waitFor();
   await page
-    .getByRole("button", { name: "Handover checklist agreed", exact: true })
-    .click();
-  await page
-    .getByRole("button", { name: "Edit milestone", exact: true })
+    .getByRole("button", { name: "Edit details", exact: true })
     .click();
   await page.getByLabel("Done — no acceptance step").uncheck();
+  await page.getByRole("button", { name: "Save changes", exact: true }).click();
+  await page.getByRole("status").filter({hasText:"Saved."}).waitFor();
+  await page.getByRole("button", {name:"Dates & dependencies", exact:true}).click();
   await page.getByLabel("Find dependencies").fill("Launch page");
   await page
     .getByRole("checkbox", { name: /^Launch page published/ })
@@ -134,28 +135,8 @@ try {
     ),
   );
 
-  await page.getByRole("button", { name: "Save changes", exact: true }).click();
-  await page.getByRole("status").filter({ hasText: "Saved." }).waitFor();
-  const dependencyRow = page
-    .locator("tbody tr")
-    .filter({
-      has: page
-        .locator("td:first-child")
-        .getByRole("button", {
-          name: "Handover checklist agreed",
-          exact: true,
-        }),
-    });
-  assert.ok(
-    (await dependencyRow.locator(".dependency-cell").innerText()).includes(
-      "Launch page published",
-    ),
-  );
-  assert.ok(
-    (await dependencyRow.locator(".dependency-cell").innerText()).includes(
-      "Pricing page published",
-    ),
-  );
+  await page.getByRole("button", {name:"Cancel",exact:true}).click();
+  await page.locator("#editor .close").click();
   await page.getByRole("button", { name: "+ Project", exact: true }).click();
   await page.getByLabel("Name", { exact: true }).fill("Browser test project");
   await page
@@ -198,16 +179,16 @@ try {
   await partial.locator("#editor [data-close]").first().click();
   await partial.getByRole("button", { name: "Milestones", exact: true }).click();
   await partial.getByRole("button", { name: "Partial milestone", exact: true }).click();
-  await partial.getByRole("button", { name: "Edit milestone", exact: true }).click();
+  await partial.getByRole("button", { name: "Edit details", exact: true }).click();
   assert.equal(await partial.locator('select[name="project"]').inputValue(), "unloaded-project");
-  assert.equal(await partial.locator('input[name="depends-on"]:checked').inputValue(), "unloaded-dependency");
+  assert.equal(await partial.locator('input[name="depends-on"]').count(), 0);
   await partial.getByLabel("Responsible person").fill("Updated owner");
   await partial.getByRole("button", { name: "Save changes", exact: true }).click();
   await partial.getByRole("status").filter({ hasText: "Saved." }).waitFor();
-  await partial.getByRole("button", { name: "Partial milestone", exact: true }).click();
-  await partial.getByRole("button", { name: "Edit milestone", exact: true }).click();
-  assert.equal(await partial.locator('select[name="project"]').inputValue(), "unloaded-project");
+  await partial.getByRole("button", { name: "Dates & dependencies", exact: true }).click();
   assert.equal(await partial.locator('input[name="depends-on"]:checked').inputValue(), "unloaded-dependency");
+  await partial.getByRole("button", { name: "Edit details", exact: true }).click();
+  assert.equal(await partial.locator('select[name="project"]').inputValue(), "unloaded-project");
   assert.equal(await partial.getByLabel("Responsible person").inputValue(), "Updated owner");
   await partial.close();
   assert.deepEqual(errors, []);

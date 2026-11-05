@@ -37,7 +37,7 @@ ambiguous resource ownership is an explicit setup error.
 
 Drag a milestone bar to move its full interval; drag either edge to adjust its start
 or finish. Release reviews the dates and dependencies together. Escape cancels the
-preview. Click a milestone name to open its details, then choose **Dates & dependencies**. Clicking a bar opens the schedule editor directly, and arrow keys
+preview. Clicking any milestone name or bar opens **Overview**. Use the persistent **Edit details** and **Dates & dependencies** navigation to choose what to change. Cancel returns to Overview; Close exits. Unsaved edits are protected when navigating, and saves return to Overview with a result message. Arrow keys
 offer a keyboard alternative (Shift changes the step to a week).
 
 Dependency chips show selected names with removal controls. Search adds prerequisites.
@@ -47,5 +47,6 @@ proposals preserve canonical records until reviewed.
 
 Run `npm run test:scheduling` against the preview to exercise mouse, touch, keyboard,
 resizing, cancellation, dependency edits, cycle prevention and combined review submission.
+Run `npm run test:popup` for consistent entry, section navigation, unsaved-change protection, save feedback and mobile layout.
 After updating an installed AirApp, use Busa's Stop then Run controls to ensure the
 new source is loaded, including on server versions with the Restart reattachment bug.

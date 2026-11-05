@@ -800,3 +800,37 @@ dialog.schedule-dialog[open] { display: flex; flex-direction: column; overflow: 
   .schedule-dialog .schedule-title { margin-bottom: 12px; }
   .schedule-dates input { padding: 8px 5px; }
 }
+
+/* Keep milestone identity and navigation visible while each section scrolls. */
+dialog.milestone-dialog[open] { display: flex; flex-direction: column; overflow: hidden; width: min(660px, calc(100% - 30px)); }
+.milestone-identity { display: flex; gap: 10px; color: #62756a; font-size: 12px; margin-bottom: 8px; flex-shrink: 0; }
+.milestone-identity span:first-child { font-weight: 700; text-transform: uppercase; letter-spacing: .05em; }
+.milestone-identity span:last-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.milestone-dialog header { margin: 0; border: 0; padding-bottom: 12px; flex-shrink: 0; gap: 12px; align-items: flex-start; }
+.milestone-dialog h2 { margin: 0; font-size: 22px; line-height: 1.25; overflow-wrap: anywhere; }
+#dialog-title:focus { outline: none; }
+.milestone-dialog .close { flex-shrink: 0; }
+.milestone-nav { display: flex; gap: 4px; border-bottom: 1px solid #dce5dc; margin: 0 0 18px; flex-shrink: 0; }
+.milestone-nav button { border: 0; border-radius: 6px 6px 0 0; background: transparent; color: #596d60; font-size: 13px; padding: 11px 12px; border-bottom: 3px solid transparent; }
+.milestone-nav button[aria-current="page"] { background: #edf4ee; border-bottom-color: #176b5b; color: #174f37; font-weight: 600; }
+.milestone-nav button:hover { background: #f0f5ef; }
+.milestone-nav button:focus-visible { outline: 2px solid #176b5b; outline-offset: -3px; }
+.milestone-dialog .section-title { margin: 0 0 14px; font-size: 15px; }
+.milestone-overview, .milestone-dialog .edit-fields { min-height: 0; overflow-y: auto; padding-right: 4px; }
+.milestone-dialog #edit-form { display: flex; flex-direction: column; min-height: 0; }
+.milestone-dialog .form-footer { flex-shrink: 0; border-top: 1px solid #e1e7df; padding-top: 14px; margin-top: 16px; }
+.milestone-facts { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 18px 24px; padding: 16px; background: #f3f7f2; border-radius: 8px; }
+.milestone-facts span { display: block; color: #66766b; font-size: 12px; margin-bottom: 5px; }
+.milestone-facts b { font-size: 14px; font-weight: 500; overflow-wrap: anywhere; }
+.milestone-overview > h3:not(.section-title) { font-size: 13px; margin: 22px 0 8px; }
+.milestone-feedback { background: #edf4ee; color: #174f37; border-radius: 6px; padding: 12px; font-size: 13px; }
+.schedule-origin { margin: 0 0 14px; color: #596d60; font-size: 13px; }
+.discard-changes { flex-shrink: 0; background: #fff5dc; color: #6b501c; padding: 12px; border-radius: 8px; margin-bottom: 14px; font-size: 13px; }
+.discard-changes p { margin: 5px 0 10px; }
+@media (max-width: 700px) {
+  dialog.milestone-dialog { padding: 18px; max-height: 94dvh; }
+  .milestone-dialog h2 { font-size: 19px; }
+  .milestone-nav { gap: 0; margin-bottom: 14px; }
+  .milestone-nav button { flex: 1; font-size: 12px; padding: 10px 6px; }
+  .milestone-facts { gap: 14px; padding: 12px; }
+}

@@ -110,9 +110,9 @@ function bar(row, kind, first) {
     (i) => i.row.id === row.id && i.kind === "conflict",
   );
   if (kind === "milestones") {
-    const attributes = `data-drag-milestone="${e(row.id)}" data-schedule="${e(row.id)}" data-kind="milestones"`;
+    const attributes = `data-drag-milestone="${e(row.id)}" data-open="${e(row.id)}" data-kind="milestones"`;
     return `<div class="bar milestone-bar ${f.done ? "done" : ""} ${conflict ? "conflict" : ""}" style="left:${left / 84 * 100}%;width:${(right - left) / 84 * 100}%">
-      <button class="milestone-move" ${attributes} data-edge="move" aria-label="Schedule ${e(title(row))}" title="${e(title(row))}: ${e(f["start-date"])} → ${e(f["end-date"])}. Drag to move; click to edit dates and dependencies.">${f.done ? "✓ " : ""}${e(title(row))}</button>
+      <button class="milestone-move" ${attributes} data-edge="move" aria-label="Open milestone ${e(title(row))}" title="${e(title(row))}: ${e(f["start-date"])} → ${e(f["end-date"])}. Drag to move; click to open milestone.">${f.done ? "✓ " : ""}${e(title(row))}</button>
       ${offset >= 0 ? `<button class="milestone-edge start" ${attributes} data-edge="start" aria-label="Change start of ${e(title(row))}" title="Drag to change start"></button>` : ""}
       ${offset + duration <= 84 ? `<button class="milestone-edge end" ${attributes} data-edge="end" aria-label="Change finish of ${e(title(row))}" title="Drag to change finish"></button>` : ""}
     </div>`;
@@ -186,6 +186,7 @@ function dependencyEditor(kind, id, selected) {
   return `<fieldset class="dependencies"><legend>Dependencies</legend><p class="muted">Work that must finish before this starts.</p><div id="dependency-selected" aria-live="polite"></div><label class="sr-only" for="dependency-search">Find dependencies</label><input type="search" id="dependency-search" placeholder="Search ${kind}…"><div class="dependency-options">${options.map((item) => `<label class="dependency-choice" data-dependency-title="${e(title(item).toLowerCase())}"><input type="checkbox" name="depends-on" value="${e(item.id)}" data-label="${e(title(item))}" ${selected.includes(item.id) ? "checked" : ""}><span><b>${e(title(item))}</b><small>${kind === "milestones" && projectOf(item) ? e(title(projectOf(item))) + " · " : ""}${item.fields["end-date"] ? "Finishes " + e(item.fields["end-date"]) : "No finish date"}</small></span></label>`).join("")}</div><p id="dependency-empty" class="muted" ${options.length ? "hidden" : ""}>No matching ${kind}.</p><small id="dependency-count"></small></fieldset>`;
 }
 function updateDependencySelection() {
+  if (!dialog.querySelector("#dependency-selected")) return;
   const inputs = [
     ...dialog.querySelectorAll('input[name="depends-on"]:checked'),
   ];
@@ -231,17 +232,57 @@ function help() {
   <h3>When to move a project</h3><p>Move Next to Now when the team is ready to begin. When current work finishes, mark the project Done and choose the next ready project. Move work to Later if it loses priority. Review these choices together when you review the roadmap.</p>
   <p><b>Priority and dates are separate.</b> Now / Next / Later describes focus and planning confidence; start and finish dates place the work in specific weeks and quarters. The labels have no fixed number of weeks. Changing a label does not change dates or move a timeline bar.</p>
   <h3>Milestones</h3><p>A milestone is a concrete outcome within a project. “Completion criteria” describes the finished result. The owner is responsible for progress; anyone with edit access can mark it Done. There is no acceptance step. Reopen it by clearing Done in Edit milestone if work needs revisiting.</p>
-  <h3>Move and resize milestones</h3><p>Drag the middle of a milestone bar to move both dates. Drag its left or right edge to change the start or finish. Dates snap to days. Release to review the proposed dates and dependencies; Cancel or Escape leaves the plan unchanged. Click a milestone name to open its details, then choose Dates &amp; dependencies to edit its schedule. Clicking a bar opens the schedule editor directly. With a bar or edge focused, use Left/Right to propose a one-day change, or Shift + Left/Right for a week.</p><h3>Dependencies and date proposals</h3><p>A dependency must finish before the dependent work starts. Amber bars flag conflicts among loaded records. Selected dependencies are shown by name; remove them with × or search to add more. “Start after dependencies” moves the proposed dates after the latest dependency finish while keeping the duration. Warnings also identify dependent milestones affected by the proposal; their dates never move automatically. Suggested dates preserve the work's duration. Submit a date proposal for review in Busa; the current schedule stays in place until approved.</p>
+  <h3>Move and resize milestones</h3><p>Drag the middle of a milestone bar to move both dates. Drag its left or right edge to change the start or finish. Dates snap to days. Release to review the proposed dates and dependencies; Cancel or Escape leaves the plan unchanged. Click a milestone name to open its details, then choose Dates &amp; dependencies to edit its schedule. Clicking a milestone name or bar always opens Overview. Use Edit details or Dates &amp; dependencies to choose what to change. Cancel returns to Overview; Close leaves the milestone. Dragging opens Dates &amp; dependencies with a proposed schedule. With a bar or edge focused, use Left/Right to propose a one-day change, or Shift + Left/Right for a week.</p><h3>Dependencies and date proposals</h3><p>A dependency must finish before the dependent work starts. Amber bars flag conflicts among loaded records. Selected dependencies are shown by name; remove them with × or search to add more. “Start after dependencies” moves the proposed dates after the latest dependency finish while keeping the duration. Warnings also identify dependent milestones affected by the proposal; their dates never move automatically. Suggested dates preserve the work's duration. Submit a date proposal for review in Busa; the current schedule stays in place until approved.</p>
   <h3>Access and loading</h3><p>The app uses your existing Busa permissions. A normal edit is saved or submitted for review according to your access. Each load reads at most 50 records per table. Use Load more to include additional records.</p></div>`;
 }
+let initialDialogFields = "";
+let dialogSaving = false;
+const formSnapshot = () => {
+  const form = dialog.querySelector("form");
+  return form ? JSON.stringify([...new FormData(form)]) : "";
+};
 function showDialog(html) {
   dialog.className = "";
+  delete dialog.dataset.milestone;
   dialog.innerHTML = html;
-  dialog.showModal();
-  dialog.querySelector("[autofocus]")?.focus();
+  const milestone = dialog.querySelector("[data-milestone-id]");
+  if (milestone) {
+    dialog.dataset.milestone = milestone.dataset.milestoneId;
+    dialog.classList.add("milestone-dialog");
+  }
+  dialog.setAttribute("aria-labelledby", "dialog-title");
+  if (!dialog.open) dialog.showModal();
+  dialog.scrollTop = 0;
+  initialDialogFields = formSnapshot();
+  dialog.querySelector("#dialog-title")?.focus({ preventScroll: true });
 }
 const dialogHeader = (text) =>
-  `<header><h2>${e(text)}</h2><button class="close" type="button" data-close aria-label="Close">×</button></header>`;
+  `<header><h2 id="dialog-title" tabindex="-1">${e(text)}</h2><button class="close" type="button" data-close aria-label="Close">×</button></header>`;
+function milestoneHeader(row, view) {
+  return `<div class="milestone-identity"><span>Milestone</span><span>${e(projectOf(row) ? title(projectOf(row)) : "Project not loaded")}</span></div>` +
+    dialogHeader(title(row)) +
+    `<nav class="milestone-nav" aria-label="Milestone sections" data-milestone-id="${e(row.id)}">${[["overview", "Overview"], ["edit", "Edit details"], ["schedule", "Dates & dependencies"]].map(([key, label]) => `<button type="button" data-milestone-view="${key}" ${key === view ? 'aria-current="page"' : ""}>${label}</button>`).join("")}</nav>`;
+}
+function milestoneNavigate(view, id = dialog.dataset.milestone) {
+  if (view === "edit") edit("milestones", id);
+  else if (view === "schedule") schedule("milestones", id);
+  else milestoneDetail(id);
+}
+function leaveDialog(action) {
+  if (dialogSaving || state.busy) return;
+  if (dialog.dataset.milestone && formSnapshot() !== initialDialogFields) {
+    dialog.querySelector(".discard-changes")?.remove();
+    const notice = document.createElement("div");
+    notice.className = "discard-changes";
+    notice.setAttribute("role", "alert");
+    notice.innerHTML = '<b>Unsaved changes</b><p>Discard your changes to leave this section?</p><div class="actions"><button type="button" data-keep-editing>Keep editing</button><button type="button" data-discard-changes>Discard changes</button></div>';
+    dialog.querySelector(".milestone-nav").after(notice);
+    notice.querySelector("[data-keep-editing]").onclick = () => { notice.remove(); dialog.querySelector("input, textarea, select")?.focus(); };
+    notice.querySelector("[data-discard-changes]").onclick = action;
+    notice.querySelector("button").focus();
+  } else action();
+}
+dialog.addEventListener("cancel", event => { event.preventDefault(); leaveDialog(() => dialog.close()); });
 function field(label, name, value = "", type = "text") {
   return `<label>${label}<input name="${name}" type="${type}" value="${e(value)}" ${name === "title" ? "required autofocus" : ""}></label>`;
 }
@@ -257,23 +298,24 @@ function edit(kind, id) {
       )
       .join("");
   showDialog(
-    dialogHeader(
+    (row && !isProject ? milestoneHeader(row, "edit") : dialogHeader(
       row
         ? "Edit " + (isProject ? "project" : "milestone")
         : "New " + (isProject ? "project" : "milestone"),
-    ) +
-      `<form id="edit-form">${field("Name", "title", f.title)}${!isProject ? `<label>Project<select name="project" required>${[...state.projects, ...refs(f.project).filter((ref) => !state.projects.some((p) => p.id === ref)).map((ref) => ({ id: ref, fields: { title: "Project not loaded" } }))].map((p) => `<option value="${e(p.id)}" ${refs(f.project).includes(p.id) || (!row && state.project === p.id) ? "selected" : ""}>${e(title(p))}</option>`).join("")}</select></label>` : ""}<label>${isProject ? "Purpose, risks and decisions" : "Completion criteria"}<textarea name="${isProject ? "brief" : "description"}">${e(f[isProject ? "brief" : "description"] || "")}</textarea></label>${field("Responsible person", "owner", f.owner)}${isProject ? `<div class="form-grid"><label>Horizon<select name="lane">${options(["now", "next", "later"], f.lane || "later")}</select></label><label>Status<select name="status">${options(["planned", "active", "paused", "done"], f.status || "planned")}</select></label></div>` : `<label class="checkbox"><input name="done" type="checkbox" ${f.done ? "checked" : ""}>Done — no acceptance step</label>`}${!row ? `<div class="form-grid">${field("Planned start", "start-date", "", "date")}${field("Planned finish", "end-date", "", "date")}</div>` : '<p class="muted">Use “Dates & dependencies” to review schedule changes together.</p>'}${dependencyEditor(kind, id, refs(f["depends-on"]))}<div class="error" role="alert"></div><div class="form-footer"><button type="button" data-close>Cancel</button><button class="primary" type="submit">${row ? "Save changes" : "Create " + (isProject ? "project" : "milestone")}</button></div></form>`,
+    )) +
+      `<form id="edit-form"><div class="edit-fields">${row && !isProject ? '<h3 class="section-title">Edit details</h3>' : ""}${field("Name", "title", f.title)}${!isProject ? `<label>Project<select name="project" required>${[...state.projects, ...refs(f.project).filter((ref) => !state.projects.some((p) => p.id === ref)).map((ref) => ({ id: ref, fields: { title: "Project not loaded" } }))].map((p) => `<option value="${e(p.id)}" ${refs(f.project).includes(p.id) || (!row && state.project === p.id) ? "selected" : ""}>${e(title(p))}</option>`).join("")}</select></label>` : ""}<label>${isProject ? "Purpose, risks and decisions" : "Completion criteria"}<textarea name="${isProject ? "brief" : "description"}">${e(f[isProject ? "brief" : "description"] || "")}</textarea></label>${field("Responsible person", "owner", f.owner)}${isProject ? `<div class="form-grid"><label>Horizon<select name="lane">${options(["now", "next", "later"], f.lane || "later")}</select></label><label>Status<select name="status">${options(["planned", "active", "paused", "done"], f.status || "planned")}</select></label></div>` : `<label class="checkbox"><input name="done" type="checkbox" ${f.done ? "checked" : ""}>Done — no acceptance step</label>`}${!row ? `<div class="form-grid">${field("Planned start", "start-date", "", "date")}${field("Planned finish", "end-date", "", "date")}</div>` : ""}${isProject || !row ? dependencyEditor(kind, id, refs(f["depends-on"])) : ""}<div class="error" role="alert"></div></div><div class="form-footer"><button type="button" ${row && !isProject ? 'data-milestone-cancel' : 'data-close'}>Cancel</button><button class="primary" type="submit">${row ? "Save changes" : "Create " + (isProject ? "project" : "milestone")}</button></div></form>`,
   );
   updateDependencySelection();
   const key = crypto.randomUUID();
   dialog.querySelector("form").onsubmit = async (event) => {
     event.preventDefault();
+    if (dialogSaving) return;
     const form = event.target,
       values = new FormData(form),
       fields = Object.fromEntries(values);
     fields.title = String(fields.title).trim();
     if (!fields.title) return;
-    fields["depends-on"] = values.getAll("depends-on");
+    if (isProject || !row) fields["depends-on"] = values.getAll("depends-on");
     if (!isProject) fields.done = values.has("done");
     if (!row) {
       try {
@@ -302,27 +344,30 @@ function edit(kind, id) {
     await write(form, () => provider.save(kind, row, fields, key));
   };
 }
-function milestoneDetail(id) {
+function milestoneDetail(id, message = "") {
   const m = state.milestones.find((m) => m.id === id);
+  if (!m) return;
   showDialog(
-    dialogHeader(title(m)) +
-      `<p class="muted">${e(projectOf(m) ? title(projectOf(m)) : "Project not loaded")}</p><h3>Dependencies</h3>${dependencySummary(m)}<h3>Completion criteria</h3><p class="definition">${e(m.fields.description || "Describe the finished result.")}</p><p><b>Responsible:</b> ${e(m.fields.owner || "Unassigned")}</p><p><b>Dates:</b> ${e(m.fields["start-date"] || "Not set")} → ${e(m.fields["end-date"] || "Not set")}</p><p>${m.fields.done ? "✓ Done" : "In progress"}</p><div class="actions"><button data-edit="${e(id)}" data-kind="milestones">Edit milestone</button><button data-schedule="${e(id)}" data-kind="milestones">Dates & dependencies</button>${!m.fields.done ? `<button class="primary" data-done="${e(id)}">Mark done</button>` : ""}</div>`,
+    milestoneHeader(m, "overview") +
+    `<div class="milestone-overview"><h3 class="section-title">Overview</h3>${message ? `<p class="milestone-feedback" role="status">${e(message)}</p>` : ""}<div class="milestone-facts"><div><span>Status</span><b>${m.fields.done ? "Done" : "In progress"}</b></div><div><span>Responsible person</span><b>${e(m.fields.owner || "Unassigned")}</b></div><div><span>Start</span><b>${e(m.fields["start-date"] || "Not set")}</b></div><div><span>Finish</span><b>${e(m.fields["end-date"] || "Not set")}</b></div></div><h3>Completion criteria</h3><p class="definition">${e(m.fields.description || "No completion criteria set.")}</p><h3>Dependencies</h3>${dependencySummary(m)}</div><div class="form-footer"><button type="button" data-close>Close</button>${!m.fields.done ? `<button class="primary" data-done="${e(id)}">Mark done</button>` : ""}</div>`,
   );
 }
 function schedule(kind, id, suggestion) {
   const row = state[kind].find((r) => r.id === id);
   if (!row) return;
   showDialog(
-    dialogHeader(kind === "milestones" ? "Milestone schedule" : "Project schedule") +
-    `<p class="schedule-title">${e(title(row))}</p><form id="schedule-form"><div class="schedule-fields">
+    (kind === "milestones" ? milestoneHeader(row, "schedule") : dialogHeader("Project schedule") + `<p class="schedule-title">${e(title(row))}</p>`) +
+    `<form id="schedule-form"><div class="schedule-fields">
+    <h3 class="section-title">Dates &amp; dependencies</h3>${suggestion ? '<p class="schedule-origin">Review the proposed dates below. Nothing has been saved.</p>' : ""}
     <div class="schedule-dates"><div class="form-grid">${field("Start", "start-date", suggestion?.start || row.fields["start-date"] || "", "date")}${field("Finish", "end-date", suggestion?.end || row.fields["end-date"] || "", "date")}</div><div class="schedule-date-summary" aria-live="polite"></div></div>
     ${dependencyEditor(kind, id, refs(row.fields["depends-on"]))}
     <div class="schedule-checks" aria-live="polite"></div>
     <div class="error" role="alert"></div>
     <p class="review-note">Dates and dependencies are submitted together for review. The current plan stays in place until approved.</p></div>
-    <div class="form-footer"><button type="button" data-close>Cancel</button><button class="primary" type="submit">Submit proposal</button></div></form>`,
+    <div class="form-footer"><button type="button" ${kind === "milestones" ? "data-milestone-cancel" : "data-close"}>Cancel</button><button class="primary" type="submit">Submit proposal</button></div></form>`,
   );
   dialog.classList.add("schedule-dialog");
+  if (suggestion) initialDialogFields = "";
   const form = dialog.querySelector("form");
   const fields = () => {
     const data = new FormData(form);
@@ -356,6 +401,7 @@ function schedule(kind, id, suggestion) {
   form.addEventListener("change", update);
   form.onsubmit = async (event) => {
     event.preventDefault();
+    if (dialogSaving) return;
     const values = fields();
     try {
       validateDates(values["start-date"], values["end-date"]);
@@ -383,13 +429,13 @@ function conflictsDialog() {
   );
 }
 async function write(form, operation, scheduleProposal = false) {
-  const button = form.querySelector('[type="submit"],button.primary');
-  if (button) button.disabled = true;
+  dialogSaving = true;
+  const buttons = [...dialog.querySelectorAll("button:not(:disabled)")];
+  buttons.forEach(button => { button.disabled = true; });
   try {
+    const milestoneId = dialog.dataset.milestone;
     const outcome = await operation();
-    dialog.close();
-    notify(
-      airAppWriteMessage(
+    const message = airAppWriteMessage(
         outcome,
         scheduleProposal
           ? {
@@ -400,27 +446,31 @@ async function write(form, operation, scheduleProposal = false) {
               },
             }
           : {},
-      ),
-    );
+      );
     await load();
     render();
+    if (milestoneId) milestoneDetail(milestoneId, message);
+    else { dialog.close(); notify(message); }
   } catch (error) {
     const target = form.querySelector(".error");
     if (target) target.textContent = error.message;
     else notify(error.message);
   } finally {
-    if (button) button.disabled = false;
+    dialogSaving = false;
+    buttons.forEach(button => { button.disabled = false; });
   }
 }
 async function markDone(id) {
   if (state.busy) return;
   state.busy = true;
   try {
+    const inMilestone = dialog.open && dialog.dataset.milestone === id;
     const row = state.milestones.find((m) => m.id === id);
     const outcome = await provider.save("milestones", row, { done: true });
     dialog.close();
-    notify(airAppWriteMessage(outcome));
     await load();
+    if (inMilestone) milestoneDetail(id, airAppWriteMessage(outcome));
+    else notify(airAppWriteMessage(outcome));
   } catch (error) {
     notify(error.message);
   } finally {
@@ -430,7 +480,7 @@ async function markDone(id) {
 }
 async function click(event) {
   const b = event.target.closest("button");
-  if (!b || b.disabled) return;
+  if (!b || b.disabled || ((dialogSaving || state.busy) && dialog.contains(b))) return;
   if (b.dataset.removeDependency) {
     const input = [...dialog.querySelectorAll('input[name="depends-on"]')].find((input) => input.value === b.dataset.removeDependency);
     if (input) {
@@ -440,8 +490,16 @@ async function click(event) {
     }
     return;
   }
+  if (b.dataset.milestoneView) {
+    if (b.getAttribute("aria-current") !== "page") leaveDialog(() => milestoneNavigate(b.dataset.milestoneView));
+    return;
+  }
+  if (b.hasAttribute("data-milestone-cancel")) {
+    milestoneDetail(dialog.dataset.milestone);
+    return;
+  }
   if (b.hasAttribute("data-close")) {
-    dialog.close();
+    leaveDialog(() => dialog.close());
     return;
   }
   if (
@@ -475,17 +533,15 @@ async function click(event) {
     if (dialog.open) dialog.close();
     edit(b.dataset.new);
   } else if (b.dataset.edit) {
-    if (dialog.open) dialog.close();
     edit(b.dataset.kind, b.dataset.edit);
   } else if (b.dataset.open) {
-    if (dialog.open) dialog.close();
     if (b.dataset.kind === "projects") {
+      if (dialog.open) dialog.close();
       state.screen = "projects";
       state.project = b.dataset.open;
       render();
     } else milestoneDetail(b.dataset.open);
   } else if (b.dataset.schedule) {
-    if (dialog.open) dialog.close();
     schedule(b.dataset.kind, b.dataset.schedule);
   } else if (b.dataset.done) {
     await markDone(b.dataset.done);

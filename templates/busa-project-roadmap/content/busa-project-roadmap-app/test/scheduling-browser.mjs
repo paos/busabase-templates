@@ -19,6 +19,12 @@ try {
   await page.screenshot({ path: "coverage/scheduling/roadmap.png" });
   const geometry = () => move.locator("..").evaluate(el => [el.style.left, el.style.width].map(value => +parseFloat(value).toFixed(4)));
   const original = await geometry();
+  const close = () => page.locator("#editor .close").click();
+  async function cancel() {
+    await page.getByRole("button", { name: "Cancel", exact: true }).click();
+    assert.equal(await page.locator(".milestone-nav [aria-current]").innerText(), "Overview");
+    await close();
+  }
   async function drag(edge, days, cancel = false) {
     const control = page.locator(`[data-drag-milestone="demo-ready"][data-edge="${edge}"]`);
     const rect = await control.boundingBox();
@@ -32,27 +38,27 @@ try {
     await page.mouse.up();
   }
   await drag("move", 3);
-  await page.getByRole("heading", { name: "Milestone schedule" }).waitFor();
+  await page.getByRole("heading", { name: "Dates & dependencies" }).waitFor();
   assert.equal(await page.getByLabel("Start", { exact: true }).inputValue(), "2026-11-26");
   assert.equal(await page.getByLabel("Finish", { exact: true }).inputValue(), "2026-12-14");
   assert.deepEqual(await geometry(), original);
   assert.equal(await page.evaluate(() => (window.proposals || []).length), 0);
-  await page.getByRole("button", { name: "Cancel", exact: true }).click();
+  await cancel();
   await drag("start", 2);
   assert.equal(await page.getByLabel("Start", { exact: true }).inputValue(), "2026-11-25");
   assert.equal(await page.getByLabel("Finish", { exact: true }).inputValue(), "2026-12-11");
-  await page.getByRole("button", { name: "Cancel", exact: true }).click();
+  await cancel();
   await drag("end", -2);
   assert.equal(await page.getByLabel("Start", { exact: true }).inputValue(), "2026-11-23");
   assert.equal(await page.getByLabel("Finish", { exact: true }).inputValue(), "2026-12-09");
-  await page.getByRole("button", { name: "Cancel", exact: true }).click();
+  await cancel();
   await drag("move", 4, true);
   assert.equal(await page.locator("dialog[open]").count(), 0);
   assert.deepEqual(await geometry(), original);
   await move.focus();
   await page.keyboard.press("Shift+ArrowRight");
   assert.equal(await page.getByLabel("Start", { exact: true }).inputValue(), "2026-11-30");
-  await page.getByRole("button", { name: "Cancel", exact: true }).click();
+  await cancel();
   await page.locator(".row-label.child").getByRole("button", { name: "Product demo ready", exact: true }).click();
   await page.getByRole("dialog").getByRole("button", { name: "Dates & dependencies", exact: true }).click();
   assert.equal(await page.getByRole("button", { name: "Submit proposal" }).isDisabled(), true);
@@ -71,11 +77,15 @@ try {
   await page.getByRole("button", { name: "Submit proposal" }).click();
   await page.getByRole("status").filter({ hasText: "Schedule proposal submitted for review" }).waitFor();
   assert.deepEqual(await page.evaluate(() => window.proposals[0].fields), proposed);
+  assert.equal(await page.locator(".milestone-nav [aria-current]").innerText(), "Overview");
+  await close();
   assert.deepEqual(await geometry(), original);
   await move.click();
+  assert.equal(await page.locator(".milestone-nav [aria-current]").innerText(), "Overview");
+  await page.getByRole("button", {name:"Dates & dependencies", exact:true}).click();
   assert.equal(await page.getByLabel("Start", { exact: true }).inputValue(), "2026-11-23");
   assert.ok((await page.locator("#dependency-selected").innerText()).includes("Launch page published"));
-  await page.getByRole("button", { name: "Cancel", exact: true }).click();
+  await cancel();
   // Choosing a successor as a predecessor creates a loop and cannot be submitted.
   await page.locator(".row-label.child").getByRole("button", { name: "Launch page published", exact: true }).click();
   await page.getByRole("dialog").getByRole("button", { name: "Dates & dependencies", exact: true }).click();
@@ -83,7 +93,7 @@ try {
   await page.getByRole("checkbox", { name: /^Product demo ready/ }).check();
   assert.ok((await page.locator(".schedule-checks").innerText()).includes("loop"));
   assert.equal(await page.getByRole("button", { name: "Submit proposal" }).isDisabled(), true);
-  await page.getByRole("button", { name: "Cancel", exact: true }).click();
+  await cancel();
   // Narrow/mobile layout, horizontally scrolled timeline, real touch dragging.
   await page.setViewportSize({ width: 390, height: 844 });
   await page.locator(".timeline").evaluate(el => el.scrollLeft = 350);
@@ -94,7 +104,7 @@ try {
   await cdp.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [point] });
   await cdp.send("Input.dispatchTouchEvent", { type: "touchMove", touchPoints: [{ x: point.x + 45, y: point.y }] });
   await cdp.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
-  await page.getByRole("heading", { name: "Milestone schedule" }).waitFor();
+  await page.getByRole("heading", { name: "Dates & dependencies" }).waitFor();
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
   assert.equal(await page.locator("#editor").evaluate(el => el.scrollWidth > el.clientWidth), false);
   assert.ok(await page.getByRole("button", { name: "Submit proposal" }).evaluate(el => {
@@ -105,7 +115,7 @@ try {
     const box = input.getBoundingClientRect(); return box.left >= parent.left && box.right <= parent.right;
   })));
   await page.screenshot({ path: "coverage/scheduling/mobile.png" });
-  await page.getByRole("button", { name: "Cancel", exact: true }).click();
+  await cancel();
   assert.deepEqual(errors, []);
   console.log("Scheduling verified: move/start/end drag, Escape, keyboard, unchanged canonical dates, named dependency removal/search, alignment, cycle blocking, single combined review proposal, mobile touch and layout.");
 } finally { await browser.close(); }
