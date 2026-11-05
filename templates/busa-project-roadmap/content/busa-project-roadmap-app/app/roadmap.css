@@ -759,11 +759,6 @@ main {
   border-radius: 7px; box-shadow: 0 3px 12px #173e3430; padding: 8px 12px;
   font-size: 12px; line-height: 1.4; max-width: calc(100vw - 16px);
 }
-.roadmap-dependencies {
-  flex: 0 0 auto; border: 0; border-radius: 5px; background: #edf3ee;
-  color: #476653; font-size: 11px; font-variant-numeric: tabular-nums; padding: 4px 5px;
-}
-.roadmap-dependencies:hover, .roadmap-dependencies:focus-visible { background: #dce9df; color: #174f37; }
 .unscheduled { background: none; border: 0; color: #32634d; text-align: left; }
 .dependency-chip { display: inline-flex; align-items: center; gap: 6px; max-width: 100%; }
 .dependency-chip > span { overflow-wrap: anywhere; }
@@ -787,7 +782,6 @@ main {
 #schedule-form .dependencies { margin-top: 14px; }
 #schedule-form .dependency-options { max-height: 150px; }
 @media (max-width: 700px) {
-  .roadmap-dependencies { padding: 4px; }
   .schedule-dates { padding: 10px; }
   .schedule-dates .form-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 8px; }
   .schedule-dates input { min-width: 0; width: 100%; font-size: 14px; }

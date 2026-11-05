@@ -90,7 +90,7 @@ workflow data belongs to the two native Bases.
 Drag the middle of a milestone bar to move its dates, or drag an end to resize
 the interval. Changes snap to calendar days. Release opens the schedule editor;
 nothing is written until Submit proposal. Escape or Cancel discards the preview.
-Click a bar or its dependency count for the same editor. Arrow keys move a focused
+Click a milestone name to open its details, then choose **Dates & dependencies**. Clicking a bar opens the schedule editor directly. Arrow keys move a focused
 bar or edge by one day; Shift changes the step to a week.
 
 The schedule editor shows start, finish, duration and selected dependency names.

@@ -14,6 +14,7 @@ try {
   await page.goto((process.env.ROADMAP_PREVIEW_URL || "http://127.0.0.1:3108") + "/?demo=1");
   const move = page.locator('[data-drag-milestone="demo-ready"][data-edge="move"]');
   await move.waitFor();
+  assert.equal(await page.locator(".row-label.child").evaluateAll(rows => rows.every(row => row.querySelectorAll("button").length === 1)), true);
   await mkdir("coverage/scheduling", { recursive: true });
   await page.screenshot({ path: "coverage/scheduling/roadmap.png" });
   const geometry = () => move.locator("..").evaluate(el => [el.style.left, el.style.width].map(value => +parseFloat(value).toFixed(4)));
@@ -52,7 +53,8 @@ try {
   await page.keyboard.press("Shift+ArrowRight");
   assert.equal(await page.getByLabel("Start", { exact: true }).inputValue(), "2026-11-30");
   await page.getByRole("button", { name: "Cancel", exact: true }).click();
-  await page.getByRole("button", { name: "Edit dependencies for Product demo ready", exact: true }).click();
+  await page.locator(".row-label.child").getByRole("button", { name: "Product demo ready", exact: true }).click();
+  await page.getByRole("dialog").getByRole("button", { name: "Dates & dependencies", exact: true }).click();
   assert.equal(await page.getByRole("button", { name: "Submit proposal" }).isDisabled(), true);
   await page.getByRole("button", { name: "Remove dependency Launch page published", exact: true }).click();
   assert.equal(await page.locator('#dependency-count').innerText(), "0 selected");
@@ -75,7 +77,8 @@ try {
   assert.ok((await page.locator("#dependency-selected").innerText()).includes("Launch page published"));
   await page.getByRole("button", { name: "Cancel", exact: true }).click();
   // Choosing a successor as a predecessor creates a loop and cannot be submitted.
-  await page.getByRole("button", { name: "Edit dependencies for Launch page published", exact: true }).click();
+  await page.locator(".row-label.child").getByRole("button", { name: "Launch page published", exact: true }).click();
+  await page.getByRole("dialog").getByRole("button", { name: "Dates & dependencies", exact: true }).click();
   await page.getByLabel("Find dependencies").fill("Product demo");
   await page.getByRole("checkbox", { name: /^Product demo ready/ }).check();
   assert.ok((await page.locator(".schedule-checks").innerText()).includes("loop"));
